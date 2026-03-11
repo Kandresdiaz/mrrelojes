@@ -1,0 +1,22 @@
+[
+  {
+    "id": "slide-1",
+    "image": "https://images.unsplash.com/photo-1548171915-e79a380a2a4b?auto=format&fit=crop&q=80&w=2000",
+    "badge": "OFERTA ESPECIAL",
+    "headline": "ESTILO, PROTECCIÓN Y ACTITUD",
+    "subheadline": "GAFAS DE SOL A SOLO",
+    "price": "$149.900",
+    "buttonText": "COMPRAR AHORA",
+    "isYellowPrice": true
+  },
+  {
+    "id": "slide-2",
+    "image": "https://images.unsplash.com/photo-1523170335258-f5ed11844a49?auto=format&fit=crop&q=80&w=2000",
+    "badge": "MARCAS INVITADAS",
+    "headline": "¿SOLO INVICTA? NO ESTA VEZ",
+    "subheadline": "MARCAS INVITADAS",
+    "price": "TIMEX • ADIDAS • FERRAGAMO",
+    "buttonText": "DESCUBRIR",
+    "isYellowPrice": false
+  }
+]

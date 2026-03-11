@@ -1,0 +1,75 @@
+[
+  {
+    "id": "inv-pro-diver-8926ob",
+    "name": "Pro Diver Automatic 8926OB",
+    "collection": "Pro Diver",
+    "price": 89.90,
+    "originalPrice": 495.00,
+    "image": "https://images.unsplash.com/photo-1523170335258-f5ed11844a49?auto=format&fit=crop&q=80&w=800",
+    "gallery": [
+      "https://images.unsplash.com/photo-1523170335258-f5ed11844a49?auto=format&fit=crop&q=80&w=800",
+      "https://images.unsplash.com/photo-1614164185128-e4ec99c436d7?auto=format&fit=crop&q=80&w=800",
+      "https://images.unsplash.com/photo-1587836374828-4dbafa94cf0e?auto=format&fit=crop&q=80&w=800"
+    ],
+    "description": "Un clásico del buceo con un movimiento automático japonés de alta precisión. Este reloj combina la elegancia del acero inoxidable con la robustez necesaria para profundidades de hasta 200 metros. El bisel unidireccional y el cristal Flame Fusion lo hacen el compañero perfecto para el día a día o aventuras submarinas.",
+    "specs": {
+      "caseSize": "40mm",
+      "movement": "Automático Japonés NH35A",
+      "waterResistance": "200m",
+      "material": "Acero Inoxidable 316L",
+      "glass": "Cristal Flame Fusion",
+      "clasp": "Cierre desplegable con seguridad"
+    },
+    "stock": 3,
+    "rating": 4.8,
+    "reviews": 1245
+  },
+  {
+    "id": "inv-venom-14461",
+    "name": "Venom Chronograph Masterpiece",
+    "collection": "Venom",
+    "price": 249.50,
+    "originalPrice": 1295.00,
+    "image": "https://images.unsplash.com/photo-1542496658-e33a6fa1eef5?auto=format&fit=crop&q=80&w=800",
+    "gallery": [
+      "https://images.unsplash.com/photo-1542496658-e33a6fa1eef5?auto=format&fit=crop&q=80&w=800",
+      "https://images.unsplash.com/photo-1509114397022-ed747cca3f65?auto=format&fit=crop&q=80&w=800"
+    ],
+    "description": "El Venom es una declaración de poder. Con una caja de 53mm y una resistencia al agua de 1000 metros, esta pieza no es para cualquiera. Su diseño imponente y su cronógrafo suizo aseguran que nunca pases desapercibido.",
+    "specs": {
+      "caseSize": "53.7mm",
+      "movement": "Cuarzo Suizo Z60",
+      "waterResistance": "1000m",
+      "material": "Acero Inoxidable Pavonado",
+      "glass": "Zafiro Sintético",
+      "clasp": "Hebilla reforzada"
+    },
+    "stock": 1,
+    "rating": 4.9,
+    "reviews": 84
+  },
+  {
+    "id": "inv-reserve-gladiator",
+    "name": "Reserve Gladiator Gold Tone",
+    "collection": "Reserve",
+    "price": 399.00,
+    "originalPrice": 2195.00,
+    "image": "https://images.unsplash.com/photo-1524592094714-0f0654e20314?auto=format&fit=crop&q=80&w=800",
+    "gallery": [
+      "https://images.unsplash.com/photo-1524592094714-0f0654e20314?auto=format&fit=crop&q=80&w=800",
+      "https://images.unsplash.com/photo-1533139502658-0198f920d8e8?auto=format&fit=crop&q=80&w=800"
+    ],
+    "description": "Inspirado en la armadura de los antiguos combatientes romanos, el Gladiator es la cúspide de la colección Reserve. Bañado en oro de 18k y con un diseño de eslabones único, es una joya de la ingeniería horológica.",
+    "specs": {
+      "caseSize": "55mm",
+      "movement": "Cronógrafo Suizo Ronda 5040.D",
+      "waterResistance": "200m",
+      "material": "Acero con baño de oro 18K",
+      "glass": "Flame Fusion",
+      "clasp": "Hebilla de seguridad con logotipo"
+    },
+    "stock": 5,
+    "rating": 5.0,
+    "reviews": 32
+  }
+]
