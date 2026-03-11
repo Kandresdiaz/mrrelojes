@@ -669,7 +669,8 @@ export default function AdminPage() {
               <div className="preview-table-wrap">
                 <table className="preview-table">
                   <thead>
-                    <tr><th>#</th><th>Nombre</th><th>Precio</th><th>Fotos</th><th>Acción</th></tr>
+                  <thead>
+                    <tr><th>#</th><th>Reloj</th><th>Precio</th><th>Fotos</th><th>Descripción</th><th>Acción</th></tr>
                   </thead>
                   <tbody>
                     {csvPreview.map((w, i) => (
@@ -684,14 +685,17 @@ export default function AdminPage() {
                           <div className="img-preview-cell">
                             {w.image ? <img src={w.image} alt="prev" className="csv-thumb" /> : <span className="no-img">Sin foto</span>}
                             {w.images && w.images.length > 0 && (
-                              <span className="gallery-count" title={w.images.join('\n')}>
+                              <span className="gallery-count">
                                 {w.images.length > 1 ? `🖼️ ${w.images.length} fotos` : '🖼️ 1 foto'}
                               </span>
                             )}
                           </div>
                         </td>
                         <td>
-                          <button className="btn-row-del large" title="Eliminar de la lista" onClick={() => removePreviewItem(i)}>🗑️ QUITAR</button>
+                          <div className="desc-preview">{w.description || 'Sin descripción'}</div>
+                        </td>
+                        <td>
+                          <button className="btn-row-del large" onClick={() => removePreviewItem(i)}>🗑️ QUITAR</button>
                         </td>
                       </tr>
                     ))}
@@ -849,6 +853,19 @@ export default function AdminPage() {
         .version-badge { background: #000; color: #fff; padding: 4px 12px; border-radius: 20px; font-size: 11px; font-weight: 900; margin-bottom: 15px; display: inline-block; }
         .btn-row-del.large { background: #fee2e2; color: #b91c1c; padding: 10px 15px; font-weight: 900; border: none; font-size: 11px; }
         .btn-row-del.large:hover { background: #fecaca; transform: scale(1.05); }
+
+        .desc-preview { 
+          max-width: 250px; 
+          font-size: 11px; 
+          color: #666; 
+          max-height: 50px; 
+          overflow-y: auto; 
+          line-height: 1.3; 
+          white-space: pre-wrap;
+          background: #f9f9f9;
+          padding: 5px;
+          border-radius: 5px;
+        }
 
         .gallery-count { 
           position: absolute; bottom: -5px; right: -5px; background: #000; color: #fff; 
