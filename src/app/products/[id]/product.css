@@ -1,0 +1,112 @@
+.pdp-wrapper { background: #fff; color: #000; min-height: 100vh; padding-bottom: 50px; font-family: var(--font-outfit); }
+
+.main-grid { display: grid; grid-template-columns: 1.2fr 1fr; gap: 60px; margin-top: 40px; }
+
+.main-image-box { background: #fdfdfd; border: 1px solid #f0f0f0; height: 500px; display: flex; align-items: center; justify-content: center; overflow: hidden; border-radius: 8px; }
+.main-img { max-width: 100%; max-height: 100%; object-fit: contain; }
+
+.thumbnails-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-top: 15px; }
+.thumb-item { border: 1px solid #eee; cursor: pointer; height: 80px; overflow: hidden; border-radius: 4px; transition: 0.3s; }
+.thumb-item.active { border: 2px solid var(--accent-gold); box-shadow: 0 0 10px rgba(212,175,55,0.3); }
+.thumb-item img { width: 100%; height: 100%; object-fit: cover; }
+
+.collection-label { color: var(--accent-gold); text-transform: uppercase; letter-spacing: 2px; font-weight: 800; font-size: 11px; display: block; margin-bottom: 8px; }
+.product-title { font-size: 32px; font-weight: 900; margin: 0 0 20px; text-transform: uppercase; line-height: 1.1; }
+
+.btn-whatsapp {
+  background-color: #25D366; color: #fff; padding: 14px 20px;
+  display: flex; align-items: center; justify-content: center; gap: 8px;
+  font-weight: bold; text-decoration: none; border-radius: 6px; margin-bottom: 20px;
+  font-size: 15px;
+}
+
+.price-box { margin-bottom: 25px; display: flex; align-items: center; gap: 15px; flex-wrap: wrap; }
+.current-price { font-size: 28px; font-weight: bold; color: #000; }
+.stock-badge { padding: 4px 10px; font-size: 11px; font-weight: bold; border-radius: 20px; }
+.stock-badge.in { background: #e6f7ed; color: #15803d; }
+.stock-badge.out { background: #fee2e2; color: #b91c1c; }
+
+.btn-buy { background: #000; color: #fff; width: 100%; padding: 18px; font-weight: 900; border: none; font-size: 15px; margin-bottom: 20px; text-transform: uppercase; cursor: pointer; transition: 0.3s; border-radius: 4px; letter-spacing: 1px; }
+.btn-buy:hover { background: var(--gold-gradient); color: #000; }
+.btn-buy:disabled { background: #ccc; cursor: not-allowed; }
+
+.description-text { line-height: 1.7; color: #555; margin-bottom: 30px; font-size: 15px; }
+
+.specs-section { border-top: 1px solid #eee; padding-top: 20px; }
+.specs-section h3 { font-size: 16px; margin-bottom: 15px; text-transform: uppercase; letter-spacing: 1px; font-weight: 900; }
+.specs-list { list-style: none; padding: 0; }
+.specs-list li { padding: 10px 0; border-bottom: 1px solid #f4f4f4; font-size: 14px; color: #444; display: flex; gap: 10px; }
+.specs-list li strong { color: #000; min-width: 140px; flex-shrink: 0; }
+
+/* RELATED */
+.related-section { margin-top: 60px; padding-top: 40px; border-top: 1px solid #f0f0f0; }
+.related-title { text-align: center; font-size: 20px; font-weight: 900; margin-bottom: 30px; text-transform: uppercase; color: #000; letter-spacing: 1px; }
+.related-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 20px; }
+
+.related-card {
+  text-decoration: none; color: #000; transition: 0.3s;
+  background: #f5f5f5; border-radius: 6px; border: 1px solid #e0e0e0;
+  overflow: hidden; display: flex; flex-direction: column;
+}
+.related-card:hover { transform: translateY(-5px); box-shadow: 0 12px 30px rgba(0,0,0,0.12); border-color: #000; }
+
+.related-img-box { height: 200px; background: #fff; display: flex; align-items: center; justify-content: center; position: relative; padding: 15px; }
+.related-img-box img { max-width: 100%; max-height: 100%; object-fit: contain; }
+
+.discount-badge { position: absolute; top: 8px; right: 8px; background: #e31e24; color: #fff; padding: 3px 8px; font-size: 12px; font-weight: 900; border-radius: 3px; z-index: 10; }
+
+.related-info { padding: 15px; text-align: center; flex-grow: 1; display: flex; flex-direction: column; align-items: center; background: #f5f5f5; }
+.related-name { font-size: 12px; font-weight: 700; color: #111; margin-bottom: 8px; overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; text-transform: uppercase; line-height: 1.4; }
+
+.stars { color: #f5c518; font-size: 12px; margin-bottom: 10px; }
+.rev-count { color: #555; font-size: 11px; font-weight: 400; text-decoration: underline; margin-left: 3px; }
+
+.price-stack { display: flex; gap: 10px; justify-content: center; align-items: center; margin-top: auto; flex-wrap: wrap; }
+.old-price { text-decoration: line-through; color: #888; font-size: 13px; }
+.current-p { color: #e31e24; font-size: 17px; font-weight: 900; }
+
+.risk-reversal-footer { background-color: #000; text-align: center; padding: 5rem 1rem; color: #fff; border-top: 1px solid rgba(212,175,55,0.2); margin-top: 80px; }
+.risk-reversal-footer h2 { background: var(--gold-gradient); -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent; margin-bottom: 1.5rem; font-weight: 900; font-size: clamp(22px, 4vw, 30px); }
+.risk-reversal-footer p { max-width: 650px; margin: 0 auto; color: #aaa; line-height: 1.8; font-size: 15px; }
+
+.loading-container { height: 100vh; display: flex; align-items: center; justify-content: center; font-size: 20px; font-weight: bold; font-family: var(--font-outfit); }
+
+/* ============ TABLET ============ */
+@media (max-width: 1024px) {
+  .main-grid { grid-template-columns: 1fr; gap: 30px; }
+  .main-image-box { height: 380px; }
+  .related-grid { grid-template-columns: repeat(3, 1fr); }
+}
+
+/* ============ MÓVIL ============ */
+@media (max-width: 768px) {
+  .main-grid { gap: 20px; padding: 0 5px; margin-top: 20px; }
+  .main-image-box { height: 300px; border-radius: 8px; }
+  .thumbnails-grid { grid-template-columns: repeat(4, 1fr); gap: 8px; }
+  .thumb-item { height: 65px; }
+
+  .product-title { font-size: 22px; text-align: center; }
+  .collection-label { text-align: center; }
+
+  .price-box { justify-content: center; }
+  .info-column { text-align: center; }
+
+  .specs-list li { flex-direction: column; gap: 2px; }
+  .specs-list li strong { min-width: auto; }
+
+  /* Relojes relacionados: scroll horizontal */
+  .related-grid {
+    display: flex;
+    overflow-x: auto;
+    gap: 15px;
+    padding-bottom: 15px;
+    scroll-snap-type: x mandatory;
+    -webkit-overflow-scrolling: touch;
+  }
+  .related-grid::-webkit-scrollbar { display: none; }
+  .related-card { min-width: 160px; flex-shrink: 0; scroll-snap-align: start; }
+  .related-img-box { height: 150px; }
+
+  .related-title { font-size: 16px; }
+  .risk-reversal-footer { padding: 3rem 1rem; }
+}
