@@ -106,11 +106,17 @@ export default function AdminPage() {
             collection: item.collection || item.coleccion || mapCollection(item.name || item.title || ''),
             price: Number(String(item.price || item.precio || 0).replace(/[^0-9]/g, '')) || 0,
             originalPrice: Number(String(item.originalPrice || item.precio_antes || item.price || 0).replace(/[^0-9]/g, '')) || 0,
-            image: item.image || item.imagen || item.url_imagen || '',
+            // Grab the first image for thumbnail, but support gallery if provided
+            image: item.image || (item.images && item.images[0]) || item.imagen || '',
+            images: item.images || [item.image || item.imagen || ''],
             stock: Number(item.stock) || 1,
             description: item.description || item.descripcion || '',
             rating: 5, reviews: 0,
-            specs: { caseSize: item.specs?.caseSize || '40mm', movement: item.specs?.movement || 'Cuarzo', waterResistance: item.specs?.waterResistance || '50m' }
+            specs: { 
+              caseSize: item.specs?.caseSize || '40mm', 
+              movement: item.specs?.movement || 'Cuarzo', 
+              waterResistance: item.specs?.waterResistance || '50m' 
+            }
           })).filter((w: any) => w.name && w.image);
           setCsvPreview(parsed);
         } catch { alert('El archivo JSON no tiene el formato correcto.'); }
@@ -659,7 +665,7 @@ export default function AdminPage() {
               <div className="preview-table-wrap">
                 <table className="preview-table">
                   <thead>
-                    <tr><th>#</th><th>Nombre</th><th>Colección (Auto)</th><th>Precio</th><th>Stock</th><th>Foto</th></tr>
+                    <tr><th>#</th><th>Nombre</th><th>Colección (Auto)</th><th>Precio</th><th>Stock</th><th>Fotos</th></tr>
                   </thead>
                   <tbody>
                     {csvPreview.map((w, i) => (
@@ -669,7 +675,14 @@ export default function AdminPage() {
                         <td><span className="badge-col">{w.collection}</span></td>
                         <td>${w.price.toLocaleString()}</td>
                         <td>{w.stock} und.</td>
-                        <td>{w.image ? <img src={w.image} alt="prev" className="csv-thumb" /> : <span className="no-img">Sin foto</span>}</td>
+                        <td>
+                          <div className="img-preview-cell">
+                            {w.image ? <img src={w.image} alt="prev" className="csv-thumb" /> : <span className="no-img">Sin foto</span>}
+                            {w.images && w.images.length > 1 && (
+                              <span className="gallery-count">🖼️ {w.images.length}</span>
+                            )}
+                          </div>
+                        </td>
                       </tr>
                     ))}
                   </tbody>
@@ -820,6 +833,13 @@ export default function AdminPage() {
         .list-scroll { max-height: 500px; overflow-y: auto; padding-right: 10px; }
         .btn-group { display: flex; gap: 10px; margin-top: 10px; }
         .btn-edit { background: #e0f2fe; color: #0369a1; border: none; padding: 5px 10px; border-radius: 5px; font-size: 12px; cursor: pointer; }
+        .img-preview-cell { position: relative; width: 60px; height: 40px; }
+        .gallery-count { 
+          position: absolute; bottom: -5px; right: -5px; background: #000; color: #fff; 
+          font-size: 10px; padding: 2px 6px; border-radius: 10px; font-weight: 900; 
+          border: 2px solid #fff; box-shadow: 0 2px 5px rgba(0,0,0,0.2); 
+        }
+
         .btn-cancel { background: #eee; color: #666; width: 100%; padding: 10px; border-radius: 10px; border: none; font-weight: bold; margin-top: 10px; cursor: pointer; }
 
         .upload-zone {
