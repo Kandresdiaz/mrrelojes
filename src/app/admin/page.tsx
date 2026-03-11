@@ -24,7 +24,7 @@ type Slide = {
 };
 
 export default function AdminPage() {
-  const [activeView, setActiveView] = useState<"menu" | "watches" | "slider" | "offers">("menu");
+  const [activeView, setActiveView] = useState<"menu" | "watches" | "slider" | "offers" | "import">("menu");
   const [watches, setWatches] = useState<Watch[]>([]);
   const [slides, setSlides] = useState<Slide[]>([]);
   const [isSyncing, setIsSyncing] = useState(false);
@@ -43,6 +43,81 @@ export default function AdminPage() {
   
   const [editingWatchId, setEditingWatchId] = useState<string | null>(null);
   const [editingSlideId, setEditingSlideId] = useState<string | null>(null);
+
+  // CSV Import
+  const [csvImporting, setCsvImporting] = useState(false);
+  const [csvProgress, setCsvProgress] = useState({ done: 0, total: 0, current: '', errors: [] as string[] });
+  const [csvPreview, setCsvPreview] = useState<any[]>([]);
+
+  const downloadTemplate = () => {
+    const header = 'nombre,coleccion,precio,precio_antes,url_imagen,stock,descripcion';
+    const example1 = 'KOSMO RELOJ HOMBRE DORADO,Caballeros,230000,320000,https://ejemplo.com/foto.jpg,1,"Reloj elegante con acabado dorado"';
+    const example2 = 'INVICTA PRO DIVER AZUL,Pro Diver,180000,250000,https://ejemplo.com/foto2.jpg,2,"Resistente al agua 200m"';
+    const example3 = 'RELOJ DAMA PLATEADO,Damas,150000,200000,https://ejemplo.com/foto3.jpg,1,"Elegante reloj femenino"';
+    const csv = [header, example1, example2, example3].join('\n');
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url; a.download = 'plantilla_relojes_mrrelojes.csv'; a.click();
+  };
+
+  const parseCsv = (text: string) => {
+    const lines = text.trim().split('\n');
+    const headers = lines[0].split(',');
+    return lines.slice(1).map((line, i) => {
+      // Handle quoted fields
+      const cols: string[] = [];
+      let cur = ''; let inQuote = false;
+      for (const ch of line) {
+        if (ch === '"') { inQuote = !inQuote; }
+        else if (ch === ',' && !inQuote) { cols.push(cur.trim()); cur = ''; }
+        else { cur += ch; }
+      }
+      cols.push(cur.trim());
+      return {
+        id: 'watch-import-' + Date.now() + '-' + i,
+        name: cols[0] || '',
+        collection: cols[1] || 'Caballeros',
+        price: Number(cols[2]?.replace(/[^0-9]/g, '')) || 0,
+        originalPrice: Number(cols[3]?.replace(/[^0-9]/g, '')) || 0,
+        image: cols[4] || '',
+        stock: Number(cols[5]) || 1,
+        description: cols[6] || '',
+        rating: 5, reviews: 0,
+        specs: { caseSize: '40mm', movement: 'Cuarzo', waterResistance: '50m' }
+      };
+    }).filter(w => w.name && w.image);
+  };
+
+  const handleCsvFile = (file: File) => {
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      const text = e.target?.result as string;
+      const parsed = parseCsv(text);
+      setCsvPreview(parsed);
+    };
+    reader.readAsText(file, 'utf-8');
+  };
+
+  const runCsvImport = async () => {
+    if (csvPreview.length === 0) return;
+    setCsvImporting(true);
+    setCsvProgress({ done: 0, total: csvPreview.length, current: '', errors: [] });
+    const errors: string[] = [];
+    for (let i = 0; i < csvPreview.length; i++) {
+      const w = csvPreview[i];
+      setCsvProgress(p => ({ ...p, done: i, current: w.name }));
+      try {
+        const res = await fetch('/api/watches', { method: 'POST', body: JSON.stringify(w) });
+        if (!res.ok) errors.push(`Error en: ${w.name}`);
+      } catch { errors.push(`Fallo: ${w.name}`); }
+      await new Promise(r => setTimeout(r, 150)); // pequeña pausa
+    }
+    setCsvProgress(p => ({ ...p, done: csvPreview.length, current: '✅ ¡Completado!', errors }));
+    setCsvImporting(false);
+    setCsvPreview([]);
+    refreshData();
+  };
 
   const handleFileUpload = async (file: File, bucket: 'watches' | 'slider') => {
     try {
@@ -266,21 +341,21 @@ export default function AdminPage() {
             <p>Las imágenes grandes que se mueven</p>
           </button>
 
+          <button className="big-card-btn import-btn" onClick={() => { setCsvPreview([]); setCsvProgress({ done: 0, total: 0, current: '', errors: [] }); setActiveView("import"); }}>
+            <span className="icon">📦</span>
+            <h2>Importar Masivo CSV</h2>
+            <p>Sube 100+ relojes de una vez desde Excel</p>
+          </button>
+
           <button className="big-card-btn offer-btn" onClick={automateOffers} disabled={isSyncing}>
             <span className="icon">{isSyncing ? "⏳" : "🪄"}</span>
             <h2>Ofertas Inteligentes</h2>
             <p>{isSyncing ? "Sincronizando..." : "Auto-crear ofertas por mejores precios"}</p>
           </button>
 
-          <button className="big-card-btn git-btn" onClick={() => alert("Todo listo para subir a GitHub y Vercel ✅")}>
-            <span className="icon">☁️</span>
-            <h2>Enviar a la Web</h2>
-            <p>Sincronizar cambios finales</p>
-          </button>
-
           <div className="stats-strip">
             <div className="stat">Tenemos <strong>{watches.length}</strong> Relojes</div>
-            <div className="stat">Hay <strong>{slides.length}</strong> Promociones activa</div>
+            <div className="stat">Hay <strong>{slides.length}</strong> Promociones activas</div>
           </div>
         </div>
       )}
@@ -467,6 +542,53 @@ export default function AdminPage() {
         .admin-header p { color: #666; font-size: 18px; }
 
         .main-menu { display: grid; grid-template-columns: repeat(2, 1fr); gap: 20px; max-width: 900px; margin: 0 auto; }
+        .big-card-btn.import-btn { background: linear-gradient(135deg, #e0f7fa, #b2ebf2); border: 2px dashed #00838f; }
+
+        .import-header { text-align: center; margin-bottom: 30px; background: #fff; padding: 30px; border-radius: 16px; box-shadow: 0 4px 20px rgba(0,0,0,0.05); }
+        .import-header h2 { font-size: 28px; font-weight: 900; margin-bottom: 10px; }
+        .import-header p { color: #666; font-size: 15px; }
+
+        .import-step { display: flex; gap: 20px; background: #fff; padding: 25px; border-radius: 16px; margin-bottom: 20px; box-shadow: 0 4px 20px rgba(0,0,0,0.05); }
+        .step-num { background: #000; color: #fff; border-radius: 50%; width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; font-weight: 900; font-size: 18px; flex-shrink: 0; }
+        .step-body h3 { font-size: 17px; font-weight: 800; margin-bottom: 8px; }
+        .step-body p { color: #555; font-size: 14px; line-height: 1.6; margin-bottom: 12px; }
+        code { background: #f0f0f0; padding: 2px 8px; border-radius: 4px; font-size: 12px; font-family: monospace; }
+
+        .btn-download { background: #000; color: #fff; padding: 12px 25px; border-radius: 10px; border: none; font-weight: 900; cursor: pointer; font-size: 14px; }
+        .btn-download:hover { background: #333; }
+
+        .tip-cards { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-top: 10px; }
+        .tip-card { background: #f9f9f9; border: 1px solid #eee; border-radius: 10px; padding: 15px; font-size: 13px; }
+        .tip-card span { font-size: 20px; display: block; margin-bottom: 5px; }
+        .tip-card strong { display: block; margin-bottom: 6px; font-size: 13px; }
+        .tip-card p { color: #666; font-size: 12px; line-height: 1.5; margin: 0; }
+        .tip-card.best { border: 2px solid var(--accent-gold); background: #fffdf0; }
+        .tip-card.best span { color: var(--accent-gold); font-weight: 900; font-size: 13px; }
+
+        .csv-drop-zone { border: 3px dashed #00838f; border-radius: 12px; padding: 40px; text-align: center; background: #e0f7fa; cursor: pointer; position: relative; font-weight: bold; color: #006064; transition: 0.3s; }
+        .csv-drop-zone:hover { background: #b2ebf2; }
+        .csv-drop-zone input { position: absolute; inset: 0; opacity: 0; cursor: pointer; width: 100%; height: 100%; }
+
+        .csv-preview { background: #fff; padding: 25px; border-radius: 16px; margin-top: 20px; box-shadow: 0 4px 20px rgba(0,0,0,0.05); }
+        .csv-preview h3 { font-size: 18px; margin-bottom: 15px; }
+        .preview-table-wrap { overflow-x: auto; max-height: 350px; overflow-y: auto; border: 1px solid #eee; border-radius: 8px; }
+        .preview-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+        .preview-table th { background: #000; color: #fff; padding: 10px 12px; text-align: left; position: sticky; top: 0; }
+        .preview-table td { padding: 8px 12px; border-bottom: 1px solid #f0f0f0; vertical-align: middle; }
+        .preview-table tr:hover td { background: #fafafa; }
+        .csv-thumb { width: 50px; height: 35px; object-fit: cover; border-radius: 4px; }
+        .no-img { color: #e31e24; font-size: 11px; }
+        .badge-col { background: #000; color: #fff; padding: 2px 8px; border-radius: 10px; font-size: 11px; white-space: nowrap; }
+
+        .btn-import-now { width: 100%; margin-top: 20px; padding: 20px; background: #000; color: #fff; border: none; border-radius: 12px; font-size: 20px; font-weight: 900; cursor: pointer; transition: 0.3s; }
+        .btn-import-now:hover { background: var(--accent-gold); color: #000; }
+
+        .import-progress { background: #fff; padding: 30px; border-radius: 16px; margin-top: 20px; text-align: center; box-shadow: 0 4px 20px rgba(0,0,0,0.05); }
+        .import-progress h3 { font-size: 20px; font-weight: 900; margin-bottom: 15px; }
+        .progress-bar-bg { background: #eee; border-radius: 10px; height: 20px; overflow: hidden; margin-bottom: 10px; }
+        .progress-bar-fill { height: 100%; background: linear-gradient(90deg, #d4af37, #f9e1a1, #d4af37); transition: width 0.3s; border-radius: 10px; }
+        .progress-current { color: #555; font-size: 14px; margin-top: 8px; }
+        .import-errors { background: #fee2e2; border-radius: 8px; padding: 15px; margin-top: 15px; text-align: left; font-size: 13px; color: #b91c1c; }
         .big-card-btn { 
           background: #fff; border: none; padding: 30px; border-radius: 20px; cursor: pointer;
           box-shadow: 0 10px 30px rgba(0,0,0,0.05); transition: 0.3s; text-align: center;
