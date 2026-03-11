@@ -47,8 +47,12 @@ function HomeContent() {
       fetch(`/api/watches?search=${search}`).then(res => res.json()),
       fetch("/api/slider").then(res => res.json())
     ]).then(([wData, sData]) => {
-      setWatches(wData);
-      setSlides(sData);
+      setWatches(Array.isArray(wData) ? wData : []);
+      setSlides(Array.isArray(sData) ? sData : []);
+      setLoading(false);
+    }).catch(() => {
+      setWatches([]);
+      setSlides([]);
       setLoading(false);
     });
   }, [searchParams]);
