@@ -160,6 +160,10 @@ export default function AdminPage() {
     refreshData();
   };
 
+  const removePreviewItem = (index: number) => {
+    setCsvPreview(prev => prev.filter((_, i) => i !== index));
+  };
+
 
   const handleFileUpload = async (file: File, bucket: 'watches' | 'slider') => {
     try {
@@ -582,6 +586,7 @@ export default function AdminPage() {
           <button className="btn-back" onClick={() => setActiveView("menu")}>⬅ Volver al Menú</button>
 
           <div className="import-header">
+            <span className="version-badge">v2.1 - Control Total ✨</span>
             <h2>📦 Importación Masiva de Relojes</h2>
             <p>Use el Robot Scraper para sacar los datos de Facebook o use la plantilla de Excel.</p>
           </div>
@@ -665,23 +670,29 @@ export default function AdminPage() {
               <div className="preview-table-wrap">
                 <table className="preview-table">
                   <thead>
-                    <tr><th>#</th><th>Nombre</th><th>Colección (Auto)</th><th>Precio</th><th>Stock</th><th>Fotos</th></tr>
+                    <tr><th>#</th><th>Nombre</th><th>Precio</th><th>Fotos</th><th>Acción</th></tr>
                   </thead>
                   <tbody>
                     {csvPreview.map((w, i) => (
                       <tr key={i}>
                         <td>{i + 1}</td>
-                        <td>{w.name}</td>
-                        <td><span className="badge-col">{w.collection}</span></td>
+                        <td>
+                          <strong>{w.name}</strong><br/>
+                          <small className="badge-col">{w.collection}</small>
+                        </td>
                         <td>${w.price.toLocaleString()}</td>
-                        <td>{w.stock} und.</td>
                         <td>
                           <div className="img-preview-cell">
                             {w.image ? <img src={w.image} alt="prev" className="csv-thumb" /> : <span className="no-img">Sin foto</span>}
-                            {w.images && w.images.length > 1 && (
-                              <span className="gallery-count">🖼️ {w.images.length}</span>
+                            {w.images && w.images.length > 0 && (
+                              <span className="gallery-count" title={w.images.join('\n')}>
+                                {w.images.length > 1 ? `🖼️ ${w.images.length} fotos` : '🖼️ 1 foto'}
+                              </span>
                             )}
                           </div>
+                        </td>
+                        <td>
+                          <button className="btn-row-del large" title="Eliminar de la lista" onClick={() => removePreviewItem(i)}>🗑️ QUITAR</button>
                         </td>
                       </tr>
                     ))}
@@ -691,7 +702,7 @@ export default function AdminPage() {
 
               {!csvImporting && csvProgress.done === 0 && (
                 <button className="btn-import-now" onClick={runCsvImport}>
-                  🚀 ¡IMPORTAR {csvPreview.length} RELOJES AHORA!
+                  🚀 ¡IMPORTAR ESTOS {csvPreview.length} RELOJES AHORA!
                 </button>
               )}
             </div>
@@ -833,11 +844,19 @@ export default function AdminPage() {
         .list-scroll { max-height: 500px; overflow-y: auto; padding-right: 10px; }
         .btn-group { display: flex; gap: 10px; margin-top: 10px; }
         .btn-edit { background: #e0f2fe; color: #0369a1; border: none; padding: 5px 10px; border-radius: 5px; font-size: 12px; cursor: pointer; }
-        .img-preview-cell { position: relative; width: 60px; height: 40px; }
+        .img-preview-cell { position: relative; width: 60px; height: 40px; margin: 0 auto; }
+        .btn-row-del { background: transparent; border: 1px solid #fee2e2; padding: 5px; border-radius: 5px; cursor: pointer; transition: 0.2s; }
+        .btn-row-del:hover { background: #fee2e2; }
+
+        .version-badge { background: #000; color: #fff; padding: 4px 12px; border-radius: 20px; font-size: 11px; font-weight: 900; margin-bottom: 15px; display: inline-block; }
+        .btn-row-del.large { background: #fee2e2; color: #b91c1c; padding: 10px 15px; font-weight: 900; border: none; font-size: 11px; }
+        .btn-row-del.large:hover { background: #fecaca; transform: scale(1.05); }
+
         .gallery-count { 
           position: absolute; bottom: -5px; right: -5px; background: #000; color: #fff; 
-          font-size: 10px; padding: 2px 6px; border-radius: 10px; font-weight: 900; 
+          font-size: 10px; padding: 2px 10px; border-radius: 10px; font-weight: 900; 
           border: 2px solid #fff; box-shadow: 0 2px 5px rgba(0,0,0,0.2); 
+          white-space: nowrap;
         }
 
         .btn-cancel { background: #eee; color: #666; width: 100%; padding: 10px; border-radius: 10px; border: none; font-weight: bold; margin-top: 10px; cursor: pointer; }
