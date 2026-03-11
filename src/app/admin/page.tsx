@@ -98,6 +98,47 @@ export default function AdminPage() {
       if (trimmed.startsWith('[') || trimmed.startsWith('{')) {
         // JSON from bookmarklet
         try {
+          if (file.name.endsWith('.html')) {
+            // Parser especial para archivos HTML de Facebook Guardados
+            const parser = new DOMParser();
+            const doc = parser.parseFromString(trimmed, 'text/html');
+            const watches: any[] = [];
+            
+            // Buscamos los contenedores de los anuncios (listitems)
+            const cards = Array.from(doc.querySelectorAll('div[role="listitem"]'));
+            
+            cards.forEach((card, i) => {
+              const text = card.textContent || '';
+              const img = card.querySelector('img')?.src || '';
+              const priceMatch = text.match(/\$[0-9.]+/);
+              
+              // Intentamos sacar el nombre (suele ser el primer texto largo)
+              const namePart = text.split('$')[0].trim().split('\n').pop()?.trim() || 'Reloj Importado';
+              
+              if (priceMatch && img && !img.includes('data:image')) {
+                watches.push({
+                  id: 'fb-html-' + Date.now() + '-' + i,
+                  name: namePart,
+                  price: parseInt(priceMatch[0].replace(/[^0-9]/g, '')),
+                  image: img,
+                  images: [img],
+                  collection: mapCollection(namePart),
+                  stock: 1,
+                  description: 'Importado de Facebook Marketplace (HTML)',
+                  rating: 5, reviews: 0,
+                  specs: { caseSize: '40mm', movement: 'Cuarzo', waterResistance: '50m' }
+                });
+              }
+            });
+            
+            if (watches.length === 0) {
+              alert('¡Mano! No encontré relojes en ese archivo. Asegúrese de guardar la página de Facebook completa (Ctrl + S).');
+            } else {
+              setCsvPreview(watches);
+            }
+            return;
+          }
+
           const raw = JSON.parse(trimmed);
           const arr = Array.isArray(raw) ? raw : [raw];
           const parsed = arr.map((item: any, i: number) => ({
@@ -106,7 +147,6 @@ export default function AdminPage() {
             collection: item.collection || item.coleccion || mapCollection(item.name || item.title || ''),
             price: Number(String(item.price || item.precio || 0).replace(/[^0-9]/g, '')) || 0,
             originalPrice: Number(String(item.originalPrice || item.precio_antes || item.price || 0).replace(/[^0-9]/g, '')) || 0,
-            // Grab the first image for thumbnail, but support gallery if provided
             image: item.image || (item.images && item.images[0]) || item.imagen || '',
             images: item.images || [item.image || item.imagen || ''],
             stock: Number(item.stock) || 1,
@@ -119,7 +159,7 @@ export default function AdminPage() {
             }
           })).filter((w: any) => w.name && w.image);
           setCsvPreview(parsed);
-        } catch { alert('El archivo JSON no tiene el formato correcto.'); }
+        } catch { alert('El archivo no tiene el formato correcto.'); }
       } else {
         const parsed = parseCsv(trimmed);
         setCsvPreview(parsed);
