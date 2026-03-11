@@ -93,10 +93,45 @@ export default function AdminPage() {
     const reader = new FileReader();
     reader.onload = (e) => {
       const text = e.target?.result as string;
-      const parsed = parseCsv(text);
-      setCsvPreview(parsed);
+      // Detect JSON or CSV
+      const trimmed = text.trim();
+      if (trimmed.startsWith('[') || trimmed.startsWith('{')) {
+        // JSON from bookmarklet
+        try {
+          const raw = JSON.parse(trimmed);
+          const arr = Array.isArray(raw) ? raw : [raw];
+          const parsed = arr.map((item: any, i: number) => ({
+            id: 'watch-import-' + Date.now() + '-' + i,
+            name: item.name || item.title || item.nombre || '',
+            collection: item.collection || item.coleccion || mapCollection(item.name || item.title || ''),
+            price: Number(String(item.price || item.precio || 0).replace(/[^0-9]/g, '')) || 0,
+            originalPrice: Number(String(item.originalPrice || item.precio_antes || item.price || 0).replace(/[^0-9]/g, '')) || 0,
+            image: item.image || item.imagen || item.url_imagen || '',
+            stock: Number(item.stock) || 1,
+            description: item.description || item.descripcion || '',
+            rating: 5, reviews: 0,
+            specs: { caseSize: item.specs?.caseSize || '40mm', movement: item.specs?.movement || 'Cuarzo', waterResistance: item.specs?.waterResistance || '50m' }
+          })).filter((w: any) => w.name && w.image);
+          setCsvPreview(parsed);
+        } catch { alert('El archivo JSON no tiene el formato correcto.'); }
+      } else {
+        const parsed = parseCsv(trimmed);
+        setCsvPreview(parsed);
+      }
     };
     reader.readAsText(file, 'utf-8');
+  };
+
+  // Auto-detectar colección por nombre del reloj
+  const mapCollection = (name: string): string => {
+    const n = name.toLowerCase();
+    if (n.includes('dama') || n.includes('mujer') || n.includes('lady') || n.includes('femenin')) return 'Damas';
+    if (n.includes('invicta') && n.includes('pro diver')) return 'Pro Diver';
+    if (n.includes('venom')) return 'Venom';
+    if (n.includes('reserve')) return 'Reserve';
+    if (n.includes('automatico') || n.includes('automático') || n.includes('automatic')) return 'Automáticos';
+    if (n.includes('cronografo') || n.includes('chrono')) return 'Cronógrafos';
+    return 'Caballeros';
   };
 
   const runCsvImport = async () => {
@@ -111,13 +146,14 @@ export default function AdminPage() {
         const res = await fetch('/api/watches', { method: 'POST', body: JSON.stringify(w) });
         if (!res.ok) errors.push(`Error en: ${w.name}`);
       } catch { errors.push(`Fallo: ${w.name}`); }
-      await new Promise(r => setTimeout(r, 150)); // pequeña pausa
+      await new Promise(r => setTimeout(r, 150));
     }
     setCsvProgress(p => ({ ...p, done: csvPreview.length, current: '✅ ¡Completado!', errors }));
     setCsvImporting(false);
     setCsvPreview([]);
     refreshData();
   };
+
 
   const handleFileUpload = async (file: File, bucket: 'watches' | 'slider') => {
     try {
@@ -535,6 +571,141 @@ export default function AdminPage() {
         </div>
       )}
 
+      {activeView === "import" && (
+        <div className="view-container animate-slide-up">
+          <button className="btn-back" onClick={() => setActiveView("menu")}>⬅ Volver al Menú</button>
+
+          <div className="import-header">
+            <h2>📦 Importación Masiva de Relojes</h2>
+            <p>Use el Robot Scraper para sacar los datos de Facebook o use la plantilla de Excel.</p>
+          </div>
+
+          {/* PASO 0 - ROBOT SCRAPER */}
+          <div className="import-step bookmarklet-step">
+            <div className="step-num">0</div>
+            <div className="step-body">
+              <h3 className="gold-text">🤖 Robot Scraper (Súper Rápido)</h3>
+              <p>Extraiga sus 100+ relojes de Facebook en 1 segundo con este botón mágico:</p>
+              
+              <div className="bookmarklet-box">
+                <p><strong>Instrucciones:</strong></p>
+                <ol>
+                  <li>Arrastre este botón a su barra de favoritos: <a href={`javascript:(function(){const items=[];document.querySelectorAll('div[role="listitem"], div[role="main"] div[style*="max-width:"]').forEach(card=>{const titleEl=card.querySelector('span[dir="auto"]');const title=titleEl?titleEl.innerText.trim():"";const spans=Array.from(card.querySelectorAll('span[dir="auto"]'));const priceEl=spans.find(s=>s.innerText.includes("$"));const price=priceEl?parseInt(priceEl.innerText.replace(/[^0-9]/g,"")):0;const img=card.querySelector('img')?.src;if(title&&img&&price>0){items.push({name:title,price:price,image:img,collection:"Marketplace",stock:1,description:"Publicado en Facebook Marketplace"});}});if(items.length===0){alert("No encontré relojes, mano. Baje hasta el final en Facebook.");return;}const blob=new Blob([JSON.stringify(items,null,2)],{type:"application/json"});const a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download="relojes_market.json";a.click();alert("¡Listo! Saqué "+items.length+" relojes.");})()`} className="bookmarklet-btn">EXTRAER RELOJES 🚀</a></li>
+                  <li>Vaya a su Facebook Marketplace (Sección "Tus publicaciones").</li>
+                  <li>Baje hasta el final de la página para cargar todo.</li>
+                  <li>Haga clic en el favorito <strong>EXTRAER RELOJES 🚀</strong>.</li>
+                  <li>Suba el archivo <code>relojes_market.json</code> aquí abajo.</li>
+                </ol>
+              </div>
+            </div>
+          </div>
+
+          {/* PASO 1 - EXCEL */}
+          <div className="import-step">
+            <div className="step-num">1</div>
+            <div className="step-body">
+              <h3>Opción B: Usar Plantilla de Excel (CSV)</h3>
+              <p>Si prefiere llenar los datos a mano en Excel, use esta plantilla:</p>
+              <button className="btn-download" onClick={downloadTemplate}>⬇️ Descargar plantilla.csv</button>
+            </div>
+          </div>
+
+          {/* PASO 2 - URL IMAGENES */}
+          <div className="import-step">
+            <div className="step-num">2</div>
+            <div className="step-body">
+              <h3>¿Cómo pongo las fotos? (Si usa Excel)</h3>
+              <p>Tiene <strong>3 opciones</strong> para la columna <code>url_imagen</code>:</p>
+              <div className="tip-cards">
+                <div className="tip-card">
+                  <span>📋</span>
+                  <strong>A — URL de Facebook</strong>
+                  <p>Marketplace → Clic derecho foto → "Copiar dirección imagen".</p>
+                </div>
+                <div className="tip-card best">
+                  <span>⭐ MEJOR</span>
+                  <strong>B — Google Drive</strong>
+                  <p>Sube a Drive → Comparte link público → Úsalo.</p>
+                </div>
+                <div className="tip-card">
+                  <span>🔗</span>
+                  <strong>C — Imgur</strong>
+                  <p>Sube a imgur.com → Copia link .jpg.</p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* PASO 3 - SUBIR ARCHIVO */}
+          <div className="import-step">
+            <div className="step-num">3</div>
+            <div className="step-body">
+              <h3>Sube tu archivo (JSON o CSV)</h3>
+              <div
+                className="csv-drop-zone"
+                onDragOver={(e) => e.preventDefault()}
+                onDrop={(e) => { e.preventDefault(); const f = e.dataTransfer.files[0]; if (f) handleCsvFile(f); }}
+              >
+                <span>📂 Arrastre su archivo aquí o toque para seleccionar</span>
+                <input type="file" accept=".csv,.json" onChange={(e) => { const f = e.target.files?.[0]; if (f) handleCsvFile(f); }} />
+              </div>
+            </div>
+          </div>
+
+          {/* PREVIEW */}
+          {csvPreview.length > 0 && (
+            <div className="csv-preview">
+              <h3>✅ Se detectaron <strong>{csvPreview.length}</strong> relojes listos:</h3>
+              <div className="preview-table-wrap">
+                <table className="preview-table">
+                  <thead>
+                    <tr><th>#</th><th>Nombre</th><th>Colección (Auto)</th><th>Precio</th><th>Stock</th><th>Foto</th></tr>
+                  </thead>
+                  <tbody>
+                    {csvPreview.map((w, i) => (
+                      <tr key={i}>
+                        <td>{i + 1}</td>
+                        <td>{w.name}</td>
+                        <td><span className="badge-col">{w.collection}</span></td>
+                        <td>${w.price.toLocaleString()}</td>
+                        <td>{w.stock} und.</td>
+                        <td>{w.image ? <img src={w.image} alt="prev" className="csv-thumb" /> : <span className="no-img">Sin foto</span>}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+
+              {!csvImporting && csvProgress.done === 0 && (
+                <button className="btn-import-now" onClick={runCsvImport}>
+                  🚀 ¡IMPORTAR {csvPreview.length} RELOJES AHORA!
+                </button>
+              )}
+            </div>
+          )}
+
+          {/* PROGRESO */}
+          {(csvImporting || csvProgress.done > 0) && (
+            <div className="import-progress">
+              <h3>{csvImporting ? `Importando... ${csvProgress.done}/${csvProgress.total}` : `✅ ¡Importación completa! ${csvProgress.done} relojes subidos`}</h3>
+              <div className="progress-bar-bg">
+                <div className="progress-bar-fill" style={{ width: `${csvProgress.total > 0 ? (csvProgress.done / csvProgress.total) * 100 : 0}%` }} />
+              </div>
+              {csvProgress.current && <p className="progress-current">{csvImporting ? `⏳ Subiendo: ${csvProgress.current}` : csvProgress.current}</p>}
+              {csvProgress.errors.length > 0 && (
+                <div className="import-errors">
+                  <strong>⚠️ Algunos errores:</strong>
+                  {csvProgress.errors.map((e, i) => <p key={i}>{e}</p>)}
+                </div>
+              )}
+              {!csvImporting && csvProgress.done > 0 && (
+                <button className="btn-back" style={{marginTop: '20px'}} onClick={() => setActiveView("menu")}>🏠 Ir al Panel Principal</button>
+              )}
+            </div>
+          )}
+        </div>
+      )}
+
       <style jsx>{`
         .admin-container { padding: 40px; font-family: var(--font-outfit), sans-serif; background: #f8f9fa; min-height: 100vh; color: #333; }
         .admin-header { text-align: center; margin-bottom: 50px; }
@@ -549,6 +720,18 @@ export default function AdminPage() {
         .import-header p { color: #666; font-size: 15px; }
 
         .import-step { display: flex; gap: 20px; background: #fff; padding: 25px; border-radius: 16px; margin-bottom: 20px; box-shadow: 0 4px 20px rgba(0,0,0,0.05); }
+        .bookmarklet-step { border: 2px solid var(--accent-gold); background: #fffdf0; }
+        .gold-text { color: #8a6d1e; }
+        .bookmarklet-box { background: #fff; padding: 15px; border-radius: 10px; border: 1px solid #eee; margin-top: 10px; }
+        .bookmarklet-box ol { padding-left: 20px; font-size: 13px; color: #444; }
+        .bookmarklet-box li { margin-bottom: 8px; }
+        .bookmarklet-btn { 
+          display: inline-block; background: #000; color: #fff !important; padding: 5px 12px; 
+          border-radius: 6px; text-decoration: none !important; font-weight: 900; font-size: 12px;
+          border: 2px solid #000; transition: 0.2s;
+        }
+        .bookmarklet-btn:hover { background: var(--accent-gold); color: #000 !important; border-color: var(--accent-gold); }
+
         .step-num { background: #000; color: #fff; border-radius: 50%; width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; font-weight: 900; font-size: 18px; flex-shrink: 0; }
         .step-body h3 { font-size: 17px; font-weight: 800; margin-bottom: 8px; }
         .step-body p { color: #555; font-size: 14px; line-height: 1.6; margin-bottom: 12px; }
