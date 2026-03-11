@@ -601,11 +601,10 @@ export default function AdminPage() {
               <div className="bookmarklet-box">
                 <p><strong>Instrucciones:</strong></p>
                 <ol>
-                  <li>Arrastre este botón a su barra de favoritos: <a href={`javascript:(function(){const items=[];document.querySelectorAll('div[role="listitem"], div[role="main"] div[style*="max-width:"]').forEach(card=>{const titleEl=card.querySelector('span[dir="auto"]');const title=titleEl?titleEl.innerText.trim():"";const spans=Array.from(card.querySelectorAll('span[dir="auto"]'));const priceEl=spans.find(s=>s.innerText.includes("$"));const price=priceEl?parseInt(priceEl.innerText.replace(/[^0-9]/g,"")):0;const img=card.querySelector('img')?.src;if(title&&img&&price>0){items.push({name:title,price:price,image:img,collection:"Marketplace",stock:1,description:"Publicado en Facebook Marketplace"});}});if(items.length===0){alert("No encontré relojes, mano. Baje hasta el final en Facebook.");return;}const blob=new Blob([JSON.stringify(items,null,2)],{type:"application/json"});const a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download="relojes_market.json";a.click();alert("¡Listo! Saqué "+items.length+" relojes.");})()`} className="bookmarklet-btn">EXTRAER RELOJES 🚀</a></li>
-                  <li>Vaya a su Facebook Marketplace (Sección "Tus publicaciones").</li>
-                  <li>Baje hasta el final de la página para cargar todo.</li>
-                  <li>Haga clic en el favorito <strong>EXTRAER RELOJES 🚀</strong>.</li>
-                  <li>Suba el archivo <code>relojes_market.json</code> aquí abajo.</li>
+                  <li>Arrastre este botón a su barra de favoritos: <a href={`javascript:(function(){const items=[];const isDetail=window.location.href.includes('marketplace/item');if(isDetail){const title=document.querySelector('span[dir="auto"]')?.innerText;const priceStr=Array.from(document.querySelectorAll('span')).find(s=>s.innerText.includes('$'))?.innerText;const images=[...new Set(Array.from(document.querySelectorAll('img')).filter(i=>i.src.includes('fbcdn')&&i.width>100).map(i=>i.src))];if(title&&priceStr){items.push({name:title,price:parseInt(priceStr.replace(/[^0-9]/g,"")),images:images,image:images[0],collection:"Marketplace",stock:1,description:document.querySelector('div[style*="white-space: pre-wrap"]')?.innerText||""});}}else{document.querySelectorAll('div[role="listitem"]').forEach(card=>{const title=card.innerText.split('\\n')[0];const priceStr=card.innerText.match(/\\$[0-9.]+/)?.[0];const images=[...new Set(Array.from(card.querySelectorAll('img')).filter(i=>i.src.includes('fbcdn')).map(i=>i.src))];if(title&&priceStr&&images.length>0){items.push({name:title,price:parseInt(priceStr.replace(/[^0-9]/g,"")),images:images,image:images[0],collection:"Marketplace",stock:1});}});}if(items.length===0){alert("No encontré nada, mano. Baje un poco más.");return;}const blob=new Blob([JSON.stringify(items,null,2)],{type:"application/json"});const a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download="relojes.json";a.click();alert("¡Listo! Saqué "+items.length+" anuncios.");})()`} className="bookmarklet-btn">EXTRAER RELOJES 🚀</a></li>
+                  <li>Vaya a su Facebook Marketplace.</li>
+                  <li><strong>Tip:</strong> Si quiere TODAS las fotos de un reloj, entre a ver ese reloj específico y hunda el botón.</li>
+                  <li>Suba el archivo <code>relojes.json</code> aquí abajo.</li>
                 </ol>
               </div>
             </div>
@@ -776,13 +775,12 @@ export default function AdminPage() {
         .csv-drop-zone:hover { background: #b2ebf2; }
         .csv-drop-zone input { position: absolute; inset: 0; opacity: 0; cursor: pointer; width: 100%; height: 100%; }
 
-        .csv-preview { background: #fff; padding: 25px; border-radius: 16px; margin-top: 20px; box-shadow: 0 4px 20px rgba(0,0,0,0.05); }
-        .csv-preview h3 { font-size: 18px; margin-bottom: 15px; }
-        .preview-table-wrap { overflow-x: auto; max-height: 350px; overflow-y: auto; border: 1px solid #eee; border-radius: 8px; }
-        .preview-table { width: 100%; border-collapse: collapse; font-size: 13px; }
-        .preview-table th { background: #000; color: #fff; padding: 10px 12px; text-align: left; position: sticky; top: 0; }
-        .preview-table td { padding: 8px 12px; border-bottom: 1px solid #f0f0f0; vertical-align: middle; }
-        .preview-table tr:hover td { background: #fafafa; }
+        .csv-preview { background: #fff; padding: 25px; border-radius: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.1); margin-top: 30px; border: 2px solid #eee; }
+        .preview-table-wrap { max-height: 500px; overflow-y: auto; overflow-x: auto; border: 1px solid #eee; border-radius: 12px; margin: 20px 0; background: #fff; }
+        .preview-table { width: 100%; border-collapse: separate; border-spacing: 0; font-size: 14px; }
+        .preview-table th { position: sticky; top: 0; background: #000; color: #fff; z-index: 10; padding: 15px; text-align: left; }
+        .preview-table td { padding: 12px 15px; border-bottom: 1px solid #eee; background: #fff; }
+        .preview-table tr:hover td { background: #fcfcfc; }
         .csv-thumb { width: 50px; height: 35px; object-fit: cover; border-radius: 4px; }
         .no-img { color: #e31e24; font-size: 11px; }
         .badge-col { background: #000; color: #fff; padding: 2px 8px; border-radius: 10px; font-size: 11px; white-space: nowrap; }
