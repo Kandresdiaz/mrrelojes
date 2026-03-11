@@ -1,15 +1,58 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams, usePathname } from "next/navigation";
+import "./header.css";
+
+type WatchSuggestion = {
+  id: string;
+  name: string;
+  collection: string;
+  price: number;
+};
+
+// Palabras clave que mapean a colecciones
+const KEYWORD_MAP: Record<string, string> = {
+  dama: "Damas",
+  damas: "Damas",
+  mujer: "Damas",
+  mujeres: "Damas",
+  femenino: "Damas",
+  caballero: "Caballeros",
+  caballeros: "Caballeros",
+  hombre: "Caballeros",
+  hombres: "Caballeros",
+  masculino: "Caballeros",
+  "pro diver": "Pro Diver",
+  diver: "Pro Diver",
+  buceo: "Pro Diver",
+  venom: "Venom",
+  reserve: "Reserve",
+  reserva: "Reserve",
+  automatico: "Automáticos",
+  automático: "Automáticos",
+  automaticos: "Automáticos",
+  cronografo: "Cronógrafos",
+  cronógrafo: "Cronógrafos",
+  oferta: "Ofertas",
+  ofertas: "Ofertas",
+  nuevo: "Nuevos Ingresos",
+  nuevos: "Nuevos Ingresos",
+};
 
 export default function Header() {
   const router = useRouter();
   const searchParams = useSearchParams();
+  const pathname = usePathname();
   const currentCategory = searchParams.get("category") || "ALL";
 
   const [searchTerm, setSearchTerm] = useState("");
+  const [suggestions, setSuggestions] = useState<WatchSuggestion[]>([]);
+  const [showSuggestions, setShowSuggestions] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const wrapperRef = useRef<HTMLDivElement>(null);
+  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const handleFilter = (category: string) => {
     if (category === "ALL") {
@@ -20,13 +63,94 @@ export default function Header() {
     }
   };
 
-  const pathname = usePathname();
-
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
     if (searchTerm.trim()) {
-      router.push(`${pathname}?search=${encodeURIComponent(searchTerm)}`);
+      setShowSuggestions(false);
+      router.push(`/?search=${encodeURIComponent(searchTerm)}`);
     }
+  };
+
+  const handleSuggestionClick = (watch: WatchSuggestion) => {
+    setShowSuggestions(false);
+    setSearchTerm(watch.name);
+    router.push(`/products/${watch.id}`);
+  };
+
+  const handleKeywordRedirect = (term: string) => {
+    const lower = term.toLowerCase().trim();
+    const matched = KEYWORD_MAP[lower];
+    if (matched) {
+      setShowSuggestions(false);
+      setSearchTerm("");
+      handleFilter(matched);
+      return true;
+    }
+    return false;
+  };
+
+  // Buscar sugerencias con debounce
+  const fetchSuggestions = useCallback(async (term: string) => {
+    if (term.length < 2) {
+      setSuggestions([]);
+      setShowSuggestions(false);
+      return;
+    }
+
+    setIsLoading(true);
+    try {
+      const res = await fetch(`/api/watches?search=${encodeURIComponent(term)}`);
+      const data = await res.json();
+      if (Array.isArray(data)) {
+        setSuggestions(data.slice(0, 6));
+        setShowSuggestions(true);
+      }
+    } catch {
+      setSuggestions([]);
+    } finally {
+      setIsLoading(false);
+    }
+  }, []);
+
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const val = e.target.value;
+    setSearchTerm(val);
+
+    if (debounceRef.current) clearTimeout(debounceRef.current);
+
+    if (val.trim().length < 2) {
+      setSuggestions([]);
+      setShowSuggestions(false);
+      return;
+    }
+
+    debounceRef.current = setTimeout(() => {
+      fetchSuggestions(val.trim());
+    }, 300);
+  };
+
+  // Cerrar sugerencias al hacer clic fuera
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (wrapperRef.current && !wrapperRef.current.contains(e.target as Node)) {
+        setShowSuggestions(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
+  // Highlight del texto buscado
+  const highlightMatch = (text: string, query: string) => {
+    const idx = text.toLowerCase().indexOf(query.toLowerCase());
+    if (idx === -1) return <span>{text}</span>;
+    return (
+      <span>
+        {text.slice(0, idx)}
+        <mark>{text.slice(idx, idx + query.length)}</mark>
+        {text.slice(idx + query.length)}
+      </span>
+    );
   };
 
   return (
@@ -81,16 +205,74 @@ export default function Header() {
           <div className="header-actions">
             <button className="super-oferta-btn" onClick={() => router.push("/collections/ofertas")}>OFERTAS 🔥</button>
             <div className="icon-group">
-              <form onSubmit={handleSearch} className="search-form">
-                <input 
-                  type="text" 
-                  placeholder="Buscar..." 
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className="search-input"
-                />
-                <button type="submit" className="search-btn">🔍</button>
-              </form>
+
+              {/* BUSCADOR INTELIGENTE */}
+              <div className="search-wrapper" ref={wrapperRef}>
+                <form onSubmit={(e) => {
+                  e.preventDefault();
+                  const redirected = handleKeywordRedirect(searchTerm);
+                  if (!redirected) {
+                    setShowSuggestions(false);
+                    router.push(`/?search=${encodeURIComponent(searchTerm)}`);
+                  }
+                }} className="search-form">
+                  <input
+                    type="text"
+                    placeholder="Buscar reloj, dama, caballero..."
+                    value={searchTerm}
+                    onChange={handleInputChange}
+                    onFocus={() => suggestions.length > 0 && setShowSuggestions(true)}
+                    className="search-input"
+                    autoComplete="off"
+                  />
+                  <button type="submit" className="search-btn">
+                    {isLoading ? "⏳" : "🔍"}
+                  </button>
+                </form>
+
+                {/* CAJA DE SUGERENCIAS */}
+                {showSuggestions && (
+                  <div className="suggestions-box">
+                    {suggestions.length > 0 ? (
+                      <>
+                        <div className="suggestions-header">Sugerencias</div>
+                        {suggestions.map((watch) => (
+                          <div
+                            key={watch.id}
+                            className="suggestion-item"
+                            onMouseDown={() => handleSuggestionClick(watch)}
+                          >
+                            <span className="suggestion-icon">⌚</span>
+                            <div className="suggestion-text">
+                              <div className="suggestion-name">
+                                {highlightMatch(watch.name, searchTerm)}
+                              </div>
+                              <div className="suggestion-collection">{watch.collection}</div>
+                            </div>
+                            <span className="suggestion-price">${watch.price.toLocaleString()}</span>
+                          </div>
+                        ))}
+                        <div
+                          className="suggestions-footer"
+                          onMouseDown={() => {
+                            setShowSuggestions(false);
+                            router.push(`/?search=${encodeURIComponent(searchTerm)}`);
+                          }}
+                        >
+                          🔍 Ver todos los resultados para "{searchTerm}"
+                        </div>
+                      </>
+                    ) : (
+                      !isLoading && (
+                        <div className="suggestions-no-results">
+                          😕 No encontramos "{searchTerm}"
+                        </div>
+                      )
+                    )}
+                  </div>
+                )}
+              </div>
+
               <Link href="/admin"><span className="nav-icon">👤</span></Link>
               <span className="nav-icon">🛒</span>
             </div>
@@ -116,55 +298,6 @@ export default function Header() {
           </div>
         </div>
       </div>
-
-      <style jsx>{`
-        .top-promo-bar { background-color: #000; color: #fff; padding: 8px 0; font-size: 13px; font-weight: 500; border-bottom: 1px solid #333; }
-        .promo-content { display: flex; justify-content: space-between; align-items: center; }
-        .promo-links { display: flex; gap: 20px; }
-        .contact-link { color: var(--accent-gold); font-weight: bold; cursor: pointer; }
-
-        .main-header { background-color: #000; color: #fff; padding: 15px 0; position: sticky; top: 0; z-index: 1000; box-shadow: 0 4px 20px rgba(0,0,0,0.5); }
-        .header-container { display: flex; justify-content: space-between; align-items: center; }
-        .logo { display: flex; flex-direction: column; align-items: center; cursor: pointer; text-decoration: none; border: 1px solid rgba(212,175,55,0.2); padding: 5px 12px; border-radius: 4px; }
-        .logo-inv { font-size: 24px; font-weight: 800; letter-spacing: 3px; line-height: 1; color: #fff; text-transform: uppercase; font-family: var(--font-outfit); }
-        .logo-badge { font-size: 9px; background: var(--gold-gradient); color: #000; padding: 2px 8px; margin-top: 4px; font-weight: 900; border-radius: 2px; }
-
-        .main-nav ul { display: flex; gap: 25px; list-style: none; font-size: 13px; font-weight: 700; font-family: var(--font-outfit); }
-        .nav-item { cursor: pointer; transition: 0.3s; position: relative; padding-bottom: 5px; color: #eee; }
-        .nav-item:hover { color: var(--accent-gold); }
-        .active-link { color: var(--accent-gold); }
-        .active-link::after { content: ''; position: absolute; bottom: 0; left: 0; width: 100%; height: 2px; background: var(--gold-gradient); }
-
-        .has-dropdown { padding-bottom: 20px; margin-bottom: -20px; }
-        .dropdown-menu {
-          position: absolute; top: 100%; left: 0; background: #111; min-width: 220px;
-          box-shadow: 0 10px 20px rgba(0,0,0,0.5); display: none; flex-direction: column;
-          padding: 10px 0; border-top: 2px solid #bf953f; z-index: 2000;
-        }
-        .has-dropdown:hover .dropdown-menu { display: flex; }
-        .dropdown-item { padding: 12px 20px; color: #eee; transition: 0.2s; font-size: 12px; border-bottom: 1px solid #222; }
-        .dropdown-item:hover { background: #222; color: #bf953f; }
-
-        .header-actions { display: flex; align-items: center; gap: 20px; }
-        .super-oferta-btn {
-          background: var(--accent-red); color: #fff; padding: 8px 18px; font-weight: 900; border-radius: 4px;
-          clip-path: polygon(10% 0%, 100% 0%, 90% 100%, 0% 100%); border: none; cursor: pointer;
-          font-family: var(--font-outfit); font-size: 11px; transition: 0.3s;
-        }
-        .super-oferta-btn:hover { transform: scale(1.05); }
-
-        .icon-group { display: flex; gap: 15px; font-size: 18px; align-items: center; }
-        .nav-icon { cursor: pointer; color: #fff; text-decoration: none; transition: 0.3s; }
-        .nav-icon:hover { color: var(--accent-gold); }
-
-        .search-form { display: flex; align-items: center; background: #1a1a1a; border: 1px solid #333; border-radius: 20px; padding: 2px 10px; }
-        .search-input { background: transparent; border: none; color: #fff; font-size: 12px; outline: none; width: 100px; padding: 5px; }
-        .search-btn { background: transparent; border: none; cursor: pointer; font-size: 14px; }
-
-        .trust-divider { background: var(--gold-gradient); color: #000; padding: 10px 0; font-size: 11px; font-weight: 900; overflow: hidden; white-space: nowrap; position: relative; }
-        .marquee-content { display: flex; animation: marquee 30s linear infinite; width: max-content; }
-        .trust-items { display: flex; gap: 50px; padding-right: 50px; }
-      `}</style>
     </>
   );
 }
