@@ -665,10 +665,12 @@ export default function AdminPage() {
           {/* PREVIEW */}
           {csvPreview.length > 0 && (
             <div className="csv-preview">
-              <h3>✅ Se detectaron <strong>{csvPreview.length}</strong> relojes listos:</h3>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '15px' }}>
+                <h3>✅ Se detectaron <strong>{csvPreview.length}</strong> relojes listos:</h3>
+                <button className="btn-row-del large" onClick={() => setCsvPreview([])}>🧹 BORRAR TODA LA LISTA</button>
+              </div>
               <div className="preview-table-wrap">
                 <table className="preview-table">
-                  <thead>
                   <thead>
                     <tr><th>#</th><th>Reloj</th><th>Precio</th><th>Fotos</th><th>Descripción</th><th>Acción</th></tr>
                   </thead>
