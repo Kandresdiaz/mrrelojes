@@ -821,11 +821,28 @@ export default function AdminPage() {
         .csv-drop-zone:hover { background: #b2ebf2; }
         .csv-drop-zone input { position: absolute; inset: 0; opacity: 0; cursor: pointer; width: 100%; height: 100%; }
 
-        .csv-preview { background: #fff; padding: 25px; border-radius: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.1); margin-top: 30px; border: 2px solid #eee; }
-        .preview-table-wrap { max-height: 500px; overflow-y: auto; overflow-x: auto; border: 1px solid #eee; border-radius: 12px; margin: 20px 0; background: #fff; }
-        .preview-table { width: 100%; border-collapse: separate; border-spacing: 0; font-size: 14px; }
-        .preview-table th { position: sticky; top: 0; background: #000; color: #fff; z-index: 10; padding: 15px; text-align: left; }
-        .preview-table td { padding: 12px 15px; border-bottom: 1px solid #eee; background: #fff; }
+        .csv-preview { background: #fff; padding: 25px; border-radius: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.1); margin-top: 30px; border: 2px solid #eee; position: relative; }
+        .preview-table-wrap { 
+          max-height: 450px; 
+          overflow-y: auto; 
+          border: 1px solid #eee; 
+          border-radius: 12px; 
+          margin: 15px 0; 
+          background: #fff;
+          box-shadow: inset 0 2px 10px rgba(0,0,0,0.05);
+        }
+        .preview-table { width: 100%; border-collapse: separate; border-spacing: 0; font-size: 13px; }
+        .preview-table th { 
+          position: sticky; 
+          top: -1px; 
+          background: #000; 
+          color: #fff; 
+          z-index: 20; 
+          padding: 12px 15px; 
+          text-align: left;
+          box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+        .preview-table td { padding: 8px 15px; border-bottom: 1px solid #eee; background: #fff; vertical-align: middle; }
         .preview-table tr:hover td { background: #fcfcfc; }
         .csv-thumb { width: 50px; height: 35px; object-fit: cover; border-radius: 4px; }
         .no-img { color: #e31e24; font-size: 11px; }
