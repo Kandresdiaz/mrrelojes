@@ -14,6 +14,16 @@ type Watch = {
   stock: number;
   isOffer?: boolean;
   brand?: string;
+  description?: string;
+  specs?: {
+    condition?: string;
+    warranty?: string;
+    caseSize?: string;
+    caseMaterial?: string;
+    strapMaterial?: string;
+    movement?: string;
+    waterResistance?: string;
+  };
 };
 
 type Slide = {
@@ -39,7 +49,19 @@ export default function AdminPage() {
   const [password, setPassword] = useState("");
 
   // States for simple forms
-  const [newWatch, setNewWatch] = useState({ id: '', name: '', collection: '', brand: '', price: '', originalPrice: '', image: '', stock: '1' });
+  const [newWatch, setNewWatch] = useState({ 
+    id: '', name: '', collection: '', brand: '', price: '', originalPrice: '', image: '', stock: '1',
+    description: '',
+    specs: {
+      condition: 'Nuevo',
+      warranty: '12 meses',
+      caseSize: '',
+      caseMaterial: '',
+      strapMaterial: '',
+      movement: '',
+      waterResistance: ''
+    }
+  });
   const [newSlide, setNewSlide] = useState({ id: '', headline: '', subheadline: '', price: '', image: '' });
   
   const [uploading, setUploading] = useState(false);
@@ -95,7 +117,15 @@ export default function AdminPage() {
         stock: Number(cols[5]) || 1,
         description: cols[6] || '',
         rating: 5, reviews: 0,
-        specs: { caseSize: '40mm', movement: 'Cuarzo', waterResistance: '50m' }
+        specs: { 
+          condition: 'Nuevo', 
+          warranty: '12 meses', 
+          caseSize: '40mm', 
+          caseMaterial: 'Acero / Aleación',
+          strapMaterial: 'Acero / Cuero',
+          movement: 'Cuarzo', 
+          waterResistance: '50m' 
+        }
       };
     }).filter(w => w.name && w.image);
   };
@@ -138,7 +168,15 @@ export default function AdminPage() {
                   stock: 1,
                   description: 'Importado de Facebook Marketplace (HTML)',
                   rating: 5, reviews: 0,
-                  specs: { caseSize: '40mm', movement: 'Cuarzo', waterResistance: '50m' }
+                  specs: { 
+                    condition: 'Nuevo', 
+                    warranty: '12 meses', 
+                    caseSize: '40mm', 
+                    caseMaterial: 'Acero / Aleación',
+                    strapMaterial: 'Acero / Cuero',
+                    movement: 'Cuarzo', 
+                    waterResistance: '50m' 
+                  }
                 });
               }
             });
@@ -168,7 +206,11 @@ export default function AdminPage() {
               description: item.description || item.descripcion || '',
               rating: 5, reviews: 0,
               specs: { 
+                condition: item.specs?.condition || 'Nuevo',
+                warranty: item.specs?.warranty || '12 meses',
                 caseSize: item.specs?.caseSize || '40mm', 
+                caseMaterial: item.specs?.caseMaterial || 'Acero / Aleación',
+                strapMaterial: item.specs?.strapMaterial || 'Acero / Cuero',
                 movement: item.specs?.movement || 'Cuarzo', 
                 waterResistance: item.specs?.waterResistance || '50m' 
               }
@@ -309,7 +351,19 @@ export default function AdminPage() {
       body: JSON.stringify(watchData),
     });
     
-    setNewWatch({ id: '', name: '', collection: '', brand: '', price: '', originalPrice: '', image: '', stock: '1' });
+    setNewWatch({ 
+      id: '', name: '', collection: '', brand: '', price: '', originalPrice: '', image: '', stock: '1',
+      description: '',
+      specs: {
+        condition: 'Nuevo',
+        warranty: '12 meses',
+        caseSize: '',
+        caseMaterial: '',
+        strapMaterial: '',
+        movement: '',
+        waterResistance: ''
+      }
+    });
     setEditingWatchId(null);
     setActiveView("menu");
     refreshData();
@@ -332,7 +386,17 @@ export default function AdminPage() {
       originalPrice: w.originalPrice.toString(),
       image: w.image,
       stock: w.stock.toString(),
-      brand: w.brand || ''
+      brand: w.brand || '',
+      description: w.description || '',
+      specs: {
+        condition: w.specs?.condition || 'Nuevo',
+        warranty: w.specs?.warranty || '12 meses',
+        caseSize: w.specs?.caseSize || '',
+        caseMaterial: w.specs?.caseMaterial || '',
+        strapMaterial: w.specs?.strapMaterial || '',
+        movement: w.specs?.movement || '',
+        waterResistance: w.specs?.waterResistance || ''
+      }
     });
     setEditingWatchId(w.id);
     setActiveView("watches");
@@ -611,11 +675,70 @@ export default function AdminPage() {
                 </div>
               </div>
 
+              <div className="specs-form-section">
+                <h2 className="section-title">Detalles y Especificaciones 🛠️</h2>
+                
+                <h2>Estado del Reloj</h2>
+                <select value={newWatch.specs.condition} onChange={e => setNewWatch({...newWatch, specs: {...newWatch.specs, condition: e.target.value}})}>
+                  <option value="Nuevo">Nuevo ✨</option>
+                  <option value="Como Nuevo">Como Nuevo (Open Box) 📦</option>
+                  <option value="Usado">Usado (Buen estado) 👍</option>
+                </select>
+
+                <h2>Descripción Corta</h2>
+                <textarea 
+                  placeholder="Ej: Elegante reloj automático con esfera verde y correa de cuero..." 
+                  value={newWatch.description} 
+                  onChange={e => setNewWatch({...newWatch, description: e.target.value})}
+                  rows={3}
+                />
+
+                <div className="specs-grid">
+                  <div className="col">
+                    <h2>Garantía</h2>
+                    <input placeholder="Ej: 12 meses" value={newWatch.specs.warranty} onChange={e => setNewWatch({...newWatch, specs: {...newWatch.specs, warranty: e.target.value}})} />
+                  </div>
+                  <div className="col">
+                    <h2>Tamaño Caja</h2>
+                    <input placeholder="Ej: 43 mm" value={newWatch.specs.caseSize} onChange={e => setNewWatch({...newWatch, specs: {...newWatch.specs, caseSize: e.target.value}})} />
+                  </div>
+                </div>
+
+                <div className="specs-grid">
+                  <div className="col">
+                    <h2>Material Caja</h2>
+                    <input placeholder="Ej: Aleación / Acero" value={newWatch.specs.caseMaterial} onChange={e => setNewWatch({...newWatch, specs: {...newWatch.specs, caseMaterial: e.target.value}})} />
+                  </div>
+                  <div className="col">
+                    <h2>Material Correa</h2>
+                    <input placeholder="Ej: Acero inoxidable" value={newWatch.specs.strapMaterial} onChange={e => setNewWatch({...newWatch, specs: {...newWatch.specs, strapMaterial: e.target.value}})} />
+                  </div>
+                </div>
+
+                <div className="specs-grid">
+                  <div className="col">
+                    <h2>Movimiento</h2>
+                    <input placeholder="Ej: Automático / Cuarzo" value={newWatch.specs.movement} onChange={e => setNewWatch({...newWatch, specs: {...newWatch.specs, movement: e.target.value}})} />
+                  </div>
+                  <div className="col">
+                    <h2>Resistencia Agua</h2>
+                    <input placeholder="Ej: 50m / 100m" value={newWatch.specs.waterResistance} onChange={e => setNewWatch({...newWatch, specs: {...newWatch.specs, waterResistance: e.target.value}})} />
+                  </div>
+                </div>
+              </div>
+
               <button className="btn-save" onClick={addWatch}>
                 {editingWatchId ? 'ACTUALIZAR DATOS ✅' : '¡LISTO! SUBIR RELOJ ✅'}
               </button>
               {editingWatchId && (
-                <button className="btn-cancel" onClick={() => {setEditingWatchId(null); setNewWatch({ id:'', name: '', collection: '', brand: '', price: '', originalPrice: '', image: '', stock: '1' });}}>Cancelar Edición</button>
+                <button className="btn-cancel" onClick={() => {
+                  setEditingWatchId(null); 
+                  setNewWatch({ 
+                    id:'', name: '', collection: '', brand: '', price: '', originalPrice: '', image: '', stock: '1',
+                    description: '',
+                    specs: { condition: 'Nuevo', warranty: '12 meses', caseSize: '', caseMaterial: '', strapMaterial: '', movement: '', waterResistance: '' }
+                  });
+                }}>Cancelar Edición</button>
               )}
             </div>
 
@@ -1064,11 +1187,15 @@ export default function AdminPage() {
         .promo-item { display: flex; gap: 15px; align-items: center; margin-bottom: 15px; padding: 10px; border-bottom: 1px solid #eee; }
         .promo-item img { width: 60px; height: 40px; border-radius: 5px; object-fit: cover; }
         .p-info h4 { font-size: 14px; margin-bottom: 5px; }
-        .btn-del { background: #fee2e2; color: #b91c1c; border: none; padding: 5px 10px; border-radius: 5px; font-size: 12px; cursor: pointer; }
+        .section-title { font-size: 18px; font-weight: 900; color: #000; margin-top: 30px; border-top: 2px solid #f0f0f0; padding-top: 20px; text-transform: uppercase; }
+        .specs-form-section { margin-top: 10px; }
+        .specs-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 5px; }
+        textarea { width: 100%; border: 2px solid #eee; border-radius: 12px; padding: 12px; font-size: 14px; outline: none; transition: 0.3s; resize: none; }
+        textarea:focus { border-color: var(--accent-gold); }
 
         .user-bar { display: flex; justify-content: space-between; align-items: center; max-width: 900px; margin: 0 auto 20px; font-size: 14px; background: #eee; padding: 10px 20px; border-radius: 10px; }
-        .btn-logout { background: transparent; border: 1px solid #ccc; padding: 5px 12px; border-radius: 5px; cursor: pointer; font-weight: bold; }
-        .btn-logout:hover { background: #fff; border-color: #000; }
+        .btn-logout { background: #fee2e2; color: #b91c1c; border: none; padding: 6px 12px; border-radius: 8px; font-size: 12px; font-weight: bold; cursor: pointer; transition: 0.3s; }
+        .btn-logout:hover { background: #fecaca; }
 
         .list-scroll { max-height: 500px; overflow-y: auto; padding-right: 10px; }
         .btn-group { display: flex; gap: 10px; margin-top: 10px; }

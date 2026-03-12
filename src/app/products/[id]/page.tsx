@@ -16,12 +16,13 @@ type Watch = {
   gallery?: string[];
   description?: string;
   specs: {
+    condition?: string;
+    warranty?: string;
     caseSize: string;
+    caseMaterial?: string;
+    strapMaterial?: string;
     movement: string;
     waterResistance: string;
-    material?: string;
-    glass?: string;
-    clasp?: string;
   };
   stock: number;
   rating: number;
@@ -114,12 +115,13 @@ function ProductDetailContent() {
           <div className="specs-section">
             <h3>Detalles Técnicos</h3>
             <ul className="specs-list">
+              {watch.specs.condition && <li><strong>Estado:</strong> {watch.specs.condition}</li>}
+              {watch.specs.warranty && <li><strong>Garantía:</strong> {watch.specs.warranty}</li>}
               <li><strong>Movimiento:</strong> {watch.specs.movement}</li>
-              <li><strong>Caja:</strong> {watch.specs.caseSize}</li>
+              <li><strong>Tamaño Caja:</strong> {watch.specs.caseSize}</li>
+              {watch.specs.caseMaterial && <li><strong>Material Caja:</strong> {watch.specs.caseMaterial}</li>}
+              {watch.specs.strapMaterial && <li><strong>Pulso/Correa:</strong> {watch.specs.strapMaterial}</li>}
               <li><strong>Resistencia al Agua:</strong> {watch.specs.waterResistance}</li>
-              {watch.specs.material && <li><strong>Material:</strong> {watch.specs.material}</li>}
-              {watch.specs.glass && <li><strong>Cristal:</strong> {watch.specs.glass}</li>}
-              {watch.specs.clasp && <li><strong>Broche:</strong> {watch.specs.clasp}</li>}
             </ul>
           </div>
         </div>
