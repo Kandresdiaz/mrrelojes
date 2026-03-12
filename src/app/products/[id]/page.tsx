@@ -17,6 +17,7 @@ type Watch = {
   description?: string;
   specs: {
     condition?: string;
+    authenticity?: string;
     warranty?: string;
     caseSize: string;
     caseMaterial?: string;
@@ -115,13 +116,14 @@ function ProductDetailContent() {
           <div className="specs-section">
             <h3>Detalles Técnicos</h3>
             <ul className="specs-list">
-              {watch.specs.condition && <li><strong>Estado:</strong> {watch.specs.condition}</li>}
-              {watch.specs.warranty && <li><strong>Garantía:</strong> {watch.specs.warranty}</li>}
-              <li><strong>Movimiento:</strong> {watch.specs.movement}</li>
-              <li><strong>Tamaño Caja:</strong> {watch.specs.caseSize}</li>
-              {watch.specs.caseMaterial && <li><strong>Material Caja:</strong> {watch.specs.caseMaterial}</li>}
-              {watch.specs.strapMaterial && <li><strong>Pulso/Correa:</strong> {watch.specs.strapMaterial}</li>}
-              <li><strong>Resistencia al Agua:</strong> {watch.specs.waterResistance}</li>
+              {watch.specs.condition && <li><strong>✨ Estado:</strong> {watch.specs.condition}</li>}
+              {watch.specs.authenticity && <li><strong>💎 Autenticidad:</strong> {watch.specs.authenticity}</li>}
+              {watch.specs.warranty && <li><strong>🛡️ Garantía:</strong> {watch.specs.warranty}</li>}
+              <li><strong>⚙️ Movimiento:</strong> {watch.specs.movement}</li>
+              <li><strong>📏 Tamaño Caja:</strong> {watch.specs.caseSize}</li>
+              {watch.specs.caseMaterial && <li><strong>🦾 Material Caja:</strong> {watch.specs.caseMaterial}</li>}
+              {watch.specs.strapMaterial && <li><strong>⌚ Pulso/Correa:</strong> {watch.specs.strapMaterial}</li>}
+              <li><strong>💧 Resistencia:</strong> {watch.specs.waterResistance}</li>
             </ul>
           </div>
         </div>

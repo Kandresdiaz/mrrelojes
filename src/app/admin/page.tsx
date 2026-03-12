@@ -17,6 +17,7 @@ type Watch = {
   description?: string;
   specs?: {
     condition?: string;
+    authenticity?: string;
     warranty?: string;
     caseSize?: string;
     caseMaterial?: string;
@@ -54,6 +55,7 @@ export default function AdminPage() {
     description: '',
     specs: {
       condition: 'Nuevo',
+      authenticity: 'Original',
       warranty: '12 meses',
       caseSize: '',
       caseMaterial: '',
@@ -356,6 +358,7 @@ export default function AdminPage() {
       description: '',
       specs: {
         condition: 'Nuevo',
+        authenticity: 'Original',
         warranty: '12 meses',
         caseSize: '',
         caseMaterial: '',
@@ -390,6 +393,7 @@ export default function AdminPage() {
       description: w.description || '',
       specs: {
         condition: w.specs?.condition || 'Nuevo',
+        authenticity: w.specs?.authenticity || 'Original',
         warranty: w.specs?.warranty || '12 meses',
         caseSize: w.specs?.caseSize || '',
         caseMaterial: w.specs?.caseMaterial || '',
@@ -558,7 +562,15 @@ export default function AdminPage() {
 
       {activeView === "menu" && (
         <div className="main-menu">
-          <button className="big-card-btn" onClick={() => { setEditingWatchId(null); setNewWatch({ id:'', name: '', collection: '', brand: '', price: '', originalPrice: '', image: '', stock: '1' }); setActiveView("watches"); }}>
+          <button className="big-card-btn" onClick={() => { 
+            setEditingWatchId(null); 
+            setNewWatch({ 
+              id:'', name: '', collection: '', brand: '', price: '', originalPrice: '', image: '', stock: '1',
+              description: '',
+              specs: { condition: 'Nuevo', authenticity: 'Original', warranty: '12 meses', caseSize: '', caseMaterial: '', strapMaterial: '', movement: '', waterResistance: '' }
+            }); 
+            setActiveView("watches"); 
+          }}>
             <span className="icon">⌚</span>
             <h2>Gestión de Relojes</h2>
             <p>Sube nuevos o edita los existentes</p>
@@ -678,12 +690,23 @@ export default function AdminPage() {
               <div className="specs-form-section">
                 <h2 className="section-title">Detalles y Especificaciones 🛠️</h2>
                 
-                <h2>Estado del Reloj</h2>
-                <select value={newWatch.specs.condition} onChange={e => setNewWatch({...newWatch, specs: {...newWatch.specs, condition: e.target.value}})}>
-                  <option value="Nuevo">Nuevo ✨</option>
-                  <option value="Como Nuevo">Como Nuevo (Open Box) 📦</option>
-                  <option value="Usado">Usado (Buen estado) 👍</option>
-                </select>
+                <div className="specs-grid">
+                  <div className="col">
+                    <h2>Estado</h2>
+                    <select value={newWatch.specs.condition} onChange={e => setNewWatch({...newWatch, specs: {...newWatch.specs, condition: e.target.value}})}>
+                      <option value="Nuevo">Nuevo ✨</option>
+                      <option value="Como Nuevo">Como Nuevo 📦</option>
+                      <option value="Usado">Usado 👍</option>
+                    </select>
+                  </div>
+                  <div className="col">
+                    <h2>Autenticidad</h2>
+                    <select value={newWatch.specs.authenticity} onChange={e => setNewWatch({...newWatch, specs: {...newWatch.specs, authenticity: e.target.value}})}>
+                      <option value="Original">Original ✅</option>
+                      <option value="AAA">AAA (Replica) ⌚</option>
+                    </select>
+                  </div>
+                </div>
 
                 <h2>Descripción Corta</h2>
                 <textarea 
