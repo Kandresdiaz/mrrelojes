@@ -474,7 +474,7 @@ export default function AdminPage() {
 
       {activeView === "menu" && (
         <div className="main-menu">
-          <button className="big-card-btn" onClick={() => { setEditingWatchId(null); setNewWatch({ id:'', name: '', collection: '', price: '', originalPrice: '', image: '', stock: '1' }); setActiveView("watches"); }}>
+          <button className="big-card-btn" onClick={() => { setEditingWatchId(null); setNewWatch({ id:'', name: '', collection: '', brand: '', price: '', originalPrice: '', image: '', stock: '1' }); setActiveView("watches"); }}>
             <span className="icon">⌚</span>
             <h2>Gestión de Relojes</h2>
             <p>Sube nuevos o edita los existentes</p>
