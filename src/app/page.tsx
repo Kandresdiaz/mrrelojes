@@ -17,6 +17,7 @@ type Watch = {
   rating: number;
   reviews: number;
   specs: { caseSize: string; movement: string };
+  brand?: string;
 };
 
 type Slide = {
@@ -167,7 +168,10 @@ function HomeContent() {
                       <span className="review-count">({watch.reviews})</span>
                     </div>
                     
-                    <span className="collection-name">{watch.collection}</span>
+                    <div className="card-top-info">
+                      <span className="collection-name">{watch.collection}</span>
+                      {watch.brand && <span className="brand-name">{watch.brand}</span>}
+                    </div>
                     <h3 className="watch-name">{watch.name}</h3>
                     
                     <div className="specs-mini">

@@ -13,6 +13,7 @@ type Watch = {
   image: string;
   stock: number;
   isOffer?: boolean;
+  brand?: string;
 };
 
 type Slide = {
@@ -24,9 +25,11 @@ type Slide = {
 };
 
 export default function AdminPage() {
-  const [activeView, setActiveView] = useState<"menu" | "watches" | "slider" | "offers" | "import">("menu");
+  const [activeView, setActiveView] = useState<"menu" | "watches" | "slider" | "offers" | "import" | "management">("menu");
   const [watches, setWatches] = useState<Watch[]>([]);
   const [slides, setSlides] = useState<Slide[]>([]);
+  const [brands, setBrands] = useState<{id: string, name: string}[]>([]);
+  const [categories, setCategories] = useState<{id: string, name: string}[]>([]);
   const [isSyncing, setIsSyncing] = useState(false);
   const [user, setUser] = useState<User | null>(null);
   const [loadingAuth, setLoadingAuth] = useState(true);
@@ -36,13 +39,17 @@ export default function AdminPage() {
   const [password, setPassword] = useState("");
 
   // States for simple forms
-  const [newWatch, setNewWatch] = useState({ id: '', name: '', collection: '', price: '', originalPrice: '', image: '', stock: '1' });
+  const [newWatch, setNewWatch] = useState({ id: '', name: '', collection: '', brand: '', price: '', originalPrice: '', image: '', stock: '1' });
   const [newSlide, setNewSlide] = useState({ id: '', headline: '', subheadline: '', price: '', image: '' });
   
   const [uploading, setUploading] = useState(false);
   
   const [editingWatchId, setEditingWatchId] = useState<string | null>(null);
   const [editingSlideId, setEditingSlideId] = useState<string | null>(null);
+  
+  // Management States
+  const [newBrandName, setNewBrandName] = useState("");
+  const [newCategoryName, setNewCategoryName] = useState("");
 
   // CSV Import
   const [csvImporting, setCsvImporting] = useState(false);
@@ -74,10 +81,12 @@ export default function AdminPage() {
         else { cur += ch; }
       }
       cols.push(cur.trim());
+      const meta = mapMetadata(cols[0] || '');
       return {
         id: 'watch-import-' + Date.now() + '-' + i,
         name: cols[0] || '',
-        collection: cols[1] || 'Caballeros',
+        collection: cols[1] || meta.collection,
+        brand: cols[7] || meta.brand,
         price: Number(cols[2]?.replace(/[^0-9]/g, '')) || 0,
         originalPrice: Number(cols[3]?.replace(/[^0-9]/g, '')) || 0,
         image: cols[4] || '',
@@ -122,7 +131,8 @@ export default function AdminPage() {
                   price: parseInt(priceMatch[0].replace(/[^0-9]/g, '')),
                   image: img,
                   images: [img],
-                  collection: mapCollection(namePart),
+                  collection: mapMetadata(namePart).collection,
+                  brand: mapMetadata(namePart).brand,
                   stock: 1,
                   description: 'Importado de Facebook Marketplace (HTML)',
                   rating: 5, reviews: 0,
@@ -141,23 +151,27 @@ export default function AdminPage() {
 
           const raw = JSON.parse(trimmed);
           const arr = Array.isArray(raw) ? raw : [raw];
-          const parsed = arr.map((item: any, i: number) => ({
-            id: 'watch-import-' + Date.now() + '-' + i,
-            name: item.name || item.title || item.nombre || '',
-            collection: item.collection || item.coleccion || mapCollection(item.name || item.title || ''),
-            price: Number(String(item.price || item.precio || 0).replace(/[^0-9]/g, '')) || 0,
-            originalPrice: Number(String(item.originalPrice || item.precio_antes || item.price || 0).replace(/[^0-9]/g, '')) || 0,
-            image: item.image || (item.images && item.images[0]) || item.imagen || '',
-            images: item.images || [item.image || item.imagen || ''],
-            stock: Number(item.stock) || 1,
-            description: item.description || item.descripcion || '',
-            rating: 5, reviews: 0,
-            specs: { 
-              caseSize: item.specs?.caseSize || '40mm', 
-              movement: item.specs?.movement || 'Cuarzo', 
-              waterResistance: item.specs?.waterResistance || '50m' 
-            }
-          })).filter((w: any) => w.name && w.image);
+          const parsed = arr.map((item: any, i: number) => {
+            const meta = mapMetadata(item.name || item.title || '');
+            return {
+              id: 'watch-import-' + Date.now() + '-' + i,
+              name: item.name || item.title || item.nombre || '',
+              collection: item.collection || item.coleccion || meta.collection,
+              brand: item.brand || item.marca || meta.brand,
+              price: Number(String(item.price || item.precio || 0).replace(/[^0-9]/g, '')) || 0,
+              originalPrice: Number(String(item.originalPrice || item.precio_antes || item.price || 0).replace(/[^0-9]/g, '')) || 0,
+              image: item.image || (item.images && item.images[0]) || item.imagen || '',
+              images: item.images || [item.image || item.imagen || ''],
+              stock: Number(item.stock) || 1,
+              description: item.description || item.descripcion || '',
+              rating: 5, reviews: 0,
+              specs: { 
+                caseSize: item.specs?.caseSize || '40mm', 
+                movement: item.specs?.movement || 'Cuarzo', 
+                waterResistance: item.specs?.waterResistance || '50m' 
+              }
+            };
+          }).filter((w: any) => w.name && w.image);
           setCsvPreview(parsed);
         } catch { alert('El archivo no tiene el formato correcto.'); }
       } else {
@@ -168,16 +182,32 @@ export default function AdminPage() {
     reader.readAsText(file, 'utf-8');
   };
 
-  // Auto-detectar colección por nombre del reloj
-  const mapCollection = (name: string): string => {
+  // Auto-detectar colección y marca por nombre del reloj
+  const mapMetadata = (name: string): { collection: string, brand: string } => {
     const n = name.toLowerCase();
-    if (n.includes('dama') || n.includes('mujer') || n.includes('lady') || n.includes('femenin')) return 'Damas';
-    if (n.includes('invicta') && n.includes('pro diver')) return 'Pro Diver';
-    if (n.includes('venom')) return 'Venom';
-    if (n.includes('reserve')) return 'Reserve';
-    if (n.includes('automatico') || n.includes('automático') || n.includes('automatic')) return 'Automáticos';
-    if (n.includes('cronografo') || n.includes('chrono')) return 'Cronógrafos';
-    return 'Caballeros';
+    let collection = 'Caballeros';
+    let brand = 'Genérico';
+
+    // Detection logic for collection
+    if (n.includes('dama') || n.includes('mujer') || n.includes('lady') || n.includes('femenin')) collection = 'Damas';
+    else if (n.includes('invicta') && n.includes('pro diver')) collection = 'Pro Diver';
+    else if (n.includes('venom')) collection = 'Venom';
+    else if (n.includes('reserve')) collection = 'Reserve';
+    else if (n.includes('automatico') || n.includes('automático') || n.includes('automatic')) collection = 'Automáticos';
+    else if (n.includes('cronografo') || n.includes('chrono')) collection = 'Cronógrafos';
+
+    // Detection logic for brand
+    if (n.includes('invicta')) brand = 'Invicta';
+    else if (n.includes('casio') || n.includes('g-shock')) brand = 'Casio';
+    else if (n.includes('rolex')) brand = 'Rolex';
+    else if (n.includes('tissot')) brand = 'Tissot';
+    else if (n.includes('seiko')) brand = 'Seiko';
+    else if (n.includes('citizen')) brand = 'Citizen';
+    else if (n.includes('diesel')) brand = 'Diesel';
+    else if (n.includes('fossil')) brand = 'Fossil';
+    else if (n.includes('orient')) brand = 'Orient';
+
+    return { collection, brand };
   };
 
   const runCsvImport = async () => {
@@ -258,6 +288,8 @@ export default function AdminPage() {
   const refreshData = () => {
     fetch("/api/watches").then(res => res.json()).then(setWatches);
     fetch("/api/slider").then(res => res.json()).then(setSlides);
+    fetch("/api/brands").then(res => res.json()).then(setBrands);
+    fetch("/api/categories").then(res => res.json()).then(setCategories);
   };
 
   const addWatch = async () => {
@@ -275,7 +307,7 @@ export default function AdminPage() {
       body: JSON.stringify(watchData),
     });
     
-    setNewWatch({ id: '', name: '', collection: '', price: '', originalPrice: '', image: '', stock: '1' });
+    setNewWatch({ id: '', name: '', collection: '', brand: '', price: '', originalPrice: '', image: '', stock: '1' });
     setEditingWatchId(null);
     setActiveView("menu");
     refreshData();
@@ -297,7 +329,8 @@ export default function AdminPage() {
       price: w.price.toString(),
       originalPrice: w.originalPrice.toString(),
       image: w.image,
-      stock: w.stock.toString()
+      stock: w.stock.toString(),
+      brand: w.brand || ''
     });
     setEditingWatchId(w.id);
     setActiveView("watches");
@@ -402,6 +435,32 @@ export default function AdminPage() {
     );
   }
 
+  const addBrand = async () => {
+    if (!newBrandName) return;
+    await fetch("/api/brands", { method: "POST", body: JSON.stringify({ name: newBrandName }) });
+    setNewBrandName("");
+    refreshData();
+  };
+
+  const deleteBrand = async (id: string) => {
+    if (!confirm("¿Desea eliminar esta marca?")) return;
+    await fetch("/api/brands", { method: "DELETE", body: JSON.stringify({ id }) });
+    refreshData();
+  };
+
+  const addCategory = async () => {
+    if (!newCategoryName) return;
+    await fetch("/api/categories", { method: "POST", body: JSON.stringify({ name: newCategoryName }) });
+    setNewCategoryName("");
+    refreshData();
+  };
+
+  const deleteCategory = async (id: string) => {
+    if (!confirm("¿Desea eliminar esta categoría?")) return;
+    await fetch("/api/categories", { method: "DELETE", body: JSON.stringify({ id }) });
+    refreshData();
+  };
+
   return (
     <div className="admin-container">
       <header className="admin-header">
@@ -433,6 +492,12 @@ export default function AdminPage() {
             <p>Sube 100+ relojes de una vez desde Excel</p>
           </button>
 
+          <button className="big-card-btn settings-btn" onClick={() => setActiveView("management")}>
+            <span className="icon">⚙️</span>
+            <h2>Categorías y Marcas</h2>
+            <p>Añade o edita marcas y categorías</p>
+          </button>
+
           <button className="big-card-btn offer-btn" onClick={automateOffers} disabled={isSyncing}>
             <span className="icon">{isSyncing ? "⏳" : "🪄"}</span>
             <h2>Ofertas Inteligentes</h2>
@@ -458,15 +523,21 @@ export default function AdminPage() {
               
               <h2>Paso 2: ¿A qué colección pertenece?</h2>
               <select value={newWatch.collection} onChange={e => setNewWatch({...newWatch, collection: e.target.value})}>
-                <option value="">Selecciona una...</option>
-                <option value="Pro Diver">Pro Diver</option>
-                <option value="Venom">Venom</option>
-                <option value="Reserve">Reserve</option>
-                <option value="Damas">Damas</option>
-                <option value="Caballeros">Caballeros</option>
+                <option value="">Selecciona categoría...</option>
+                {categories.map(c => (
+                  <option key={c.id} value={c.name}>{c.name}</option>
+                ))}
               </select>
 
-              <h2>Paso 3: Foto del Reloj (Arrastre aquí o haga clic)</h2>
+              <h2>Paso 3: ¿De qué marca es?</h2>
+              <select value={newWatch.brand} onChange={e => setNewWatch({...newWatch, brand: e.target.value})}>
+                <option value="">Selecciona marca...</option>
+                {brands.map(b => (
+                  <option key={b.id} value={b.name}>{b.name}</option>
+                ))}
+              </select>
+
+              <h2>Paso 4: Foto del Reloj (Arrastre aquí o haga clic)</h2>
               <div 
                 className={`upload-zone ${newWatch.image ? 'has-file' : ''}`}
                 onDragOver={(e) => e.preventDefault()}
@@ -524,7 +595,7 @@ export default function AdminPage() {
                 {editingWatchId ? 'ACTUALIZAR DATOS ✅' : '¡LISTO! SUBIR RELOJ ✅'}
               </button>
               {editingWatchId && (
-                <button className="btn-cancel" onClick={() => {setEditingWatchId(null); setNewWatch({ id:'', name: '', collection: '', price: '', originalPrice: '', image: '', stock: '1' });}}>Cancelar Edición</button>
+                <button className="btn-cancel" onClick={() => {setEditingWatchId(null); setNewWatch({ id:'', name: '', collection: '', brand: '', price: '', originalPrice: '', image: '', stock: '1' });}}>Cancelar Edición</button>
               )}
             </div>
 
@@ -775,6 +846,56 @@ export default function AdminPage() {
         </div>
       )}
 
+      {activeView === "management" && (
+        <div className="view-container animate-slide-up">
+          <button className="btn-back" onClick={() => setActiveView("menu")}>⬅ Volver al Menú</button>
+          
+          <div className="dual-view">
+            <div className="easy-form">
+              <h2 className="title-promo">Gestionar Marcas 🏷️</h2>
+              <div className="input-group">
+                <input 
+                  placeholder="Ej: Rolelex" 
+                  value={newBrandName} 
+                  onChange={e => setNewBrandName(e.target.value)} 
+                />
+                <button className="btn-save-sm" onClick={addBrand}>Añadir Marca</button>
+              </div>
+              
+              <div className="list-mini">
+                {brands.map(b => (
+                  <div key={b.id} className="mini-item">
+                    <span>{b.name}</span>
+                    <button className="btn-del-xs" onClick={() => deleteBrand(b.id)}>×</button>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            <div className="easy-form">
+              <h2 className="title-promo">Gestionar Categorías 📂</h2>
+              <div className="input-group">
+                <input 
+                  placeholder="Ej: Deportivos" 
+                  value={newCategoryName} 
+                  onChange={e => setNewCategoryName(e.target.value)} 
+                />
+                <button className="btn-save-sm" onClick={addCategory}>Añadir Categoría</button>
+              </div>
+
+              <div className="list-mini">
+                {categories.map(c => (
+                  <div key={c.id} className="mini-item">
+                    <span>{c.name}</span>
+                    <button className="btn-del-xs" onClick={() => deleteCategory(c.id)}>×</button>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
       <style jsx>{`
         .admin-container { padding: 40px; font-family: var(--font-outfit), sans-serif; background: #f8f9fa; min-height: 100vh; color: #333; }
         .admin-header { text-align: center; margin-bottom: 50px; }
@@ -880,6 +1001,14 @@ export default function AdminPage() {
         .view-container { max-width: 800px; margin: 0 auto; }
         .btn-back { background: #ddd; padding: 10px 20px; border-radius: 10px; border: none; font-weight: bold; margin-bottom: 30px; cursor: pointer; }
         
+        .input-group { display: flex; gap: 10px; margin-bottom: 20px; }
+        .btn-save-sm { background: #000; color: #fff; padding: 0 15px; border-radius: 10px; border: none; font-weight: bold; cursor: pointer; white-space: nowrap; }
+        
+        .list-mini { max-height: 300px; overflow-y: auto; display: flex; flex-wrap: wrap; gap: 8px; }
+        .mini-item { background: #f0f0f0; padding: 5px 12px; border-radius: 20px; display: flex; align-items: center; gap: 8px; font-size: 13px; font-weight: 500; }
+        .btn-del-xs { background: #fee2e2; color: #b91c1c; border: none; border-radius: 50%; width: 18px; height: 18px; display: flex; align-items: center; justify-content: center; cursor: pointer; font-size: 14px; font-weight: bold; }
+        .btn-del-xs:hover { background: #fecaca; }
+
         .easy-form { background: #fff; padding: 40px; border-radius: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.05); }
         .easy-form h2 { font-size: 14px; font-weight: bold; color: #666; margin: 15px 0 8px; text-transform: uppercase; }
         input, select { width: 100%; padding: 12px; border: 2px solid #eee; border-radius: 10px; font-size: 15px; outline: none; transition: 0.2s; }

@@ -26,6 +26,7 @@ type Watch = {
   stock: number;
   rating: number;
   reviews: number;
+  brand?: string;
 };
 
 function ProductDetailContent() {
@@ -83,7 +84,10 @@ function ProductDetailContent() {
 
         {/* INFO */}
         <div className="info-column">
-          <span className="collection-label">PURA MAQUINARIA: {watch.collection}</span>
+          <div className="collection-brand-wrap">
+            <span className="collection-label">PURA MAQUINARIA: {watch.collection}</span>
+            {watch.brand && <span className="brand-label">{watch.brand}</span>}
+          </div>
           <h1 className="product-title">{watch.name}</h1>
 
           <a href={whatsappUrl} target="_blank" rel="noopener noreferrer" className="btn-whatsapp">
