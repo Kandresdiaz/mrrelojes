@@ -595,11 +595,11 @@ export default function AdminPage() {
 
               <div className="row">
                 <div className="col">
-                  <h2>Precio Real</h2>
+                  <h2>Precio de Venta (Lo que paga el cliente)</h2>
                   <input type="number" placeholder="Ej: 299900" value={newWatch.price} onChange={e => setNewWatch({...newWatch, price: e.target.value})} />
                 </div>
                 <div className="col">
-                  <h2>Precio Antes (Tachado)</h2>
+                  <h2>Precio Original (Aparecerá tachado)</h2>
                   <input type="number" placeholder="Ej: 500000" value={newWatch.originalPrice} onChange={e => setNewWatch({...newWatch, originalPrice: e.target.value})} />
                 </div>
               </div>
