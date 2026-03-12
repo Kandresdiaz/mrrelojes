@@ -121,6 +121,7 @@ export default function AdminPage() {
         rating: 5, reviews: 0,
         specs: { 
           condition: 'Nuevo', 
+          authenticity: 'Original',
           warranty: '12 meses', 
           caseSize: '40mm', 
           caseMaterial: 'Acero / Aleación',
@@ -172,6 +173,7 @@ export default function AdminPage() {
                   rating: 5, reviews: 0,
                   specs: { 
                     condition: 'Nuevo', 
+                    authenticity: 'Original',
                     warranty: '12 meses', 
                     caseSize: '40mm', 
                     caseMaterial: 'Acero / Aleación',
@@ -209,6 +211,7 @@ export default function AdminPage() {
               rating: 5, reviews: 0,
               specs: { 
                 condition: item.specs?.condition || 'Nuevo',
+                authenticity: item.specs?.authenticity || 'Original',
                 warranty: item.specs?.warranty || '12 meses',
                 caseSize: item.specs?.caseSize || '40mm', 
                 caseMaterial: item.specs?.caseMaterial || 'Acero / Aleación',
@@ -759,7 +762,7 @@ export default function AdminPage() {
                   setNewWatch({ 
                     id:'', name: '', collection: '', brand: '', price: '', originalPrice: '', image: '', stock: '1',
                     description: '',
-                    specs: { condition: 'Nuevo', warranty: '12 meses', caseSize: '', caseMaterial: '', strapMaterial: '', movement: '', waterResistance: '' }
+                    specs: { condition: 'Nuevo', authenticity: 'Original', warranty: '12 meses', caseSize: '', caseMaterial: '', strapMaterial: '', movement: '', waterResistance: '' }
                   });
                 }}>Cancelar Edición</button>
               )}
