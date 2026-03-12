@@ -16,12 +16,15 @@ export async function GET() {
 
 export async function POST(request: Request) {
   try {
-    const { name } = await request.json();
+    const { id, name } = await request.json();
     if (!name) return NextResponse.json({ error: 'Name is required' }, { status: 400 });
+
+    const payload: any = { name };
+    if (id) payload.id = id;
 
     const { data, error } = await supabase
       .from('brands')
-      .upsert({ name })
+      .upsert(payload)
       .select();
 
     if (error) throw error;

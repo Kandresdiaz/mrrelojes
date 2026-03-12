@@ -50,6 +50,8 @@ export default function AdminPage() {
   // Management States
   const [newBrandName, setNewBrandName] = useState("");
   const [newCategoryName, setNewCategoryName] = useState("");
+  const [editingBrandId, setEditingBrandId] = useState<string | null>(null);
+  const [editingCategoryId, setEditingCategoryId] = useState<string | null>(null);
 
   // CSV Import
   const [csvImporting, setCsvImporting] = useState(false);
@@ -437,9 +439,18 @@ export default function AdminPage() {
 
   const addBrand = async () => {
     if (!newBrandName) return;
-    await fetch("/api/brands", { method: "POST", body: JSON.stringify({ name: newBrandName }) });
+    await fetch("/api/brands", { 
+      method: "POST", 
+      body: JSON.stringify({ id: editingBrandId, name: newBrandName }) 
+    });
     setNewBrandName("");
+    setEditingBrandId(null);
     refreshData();
+  };
+
+  const startEditBrand = (brand: {id: string, name: string}) => {
+    setNewBrandName(brand.name);
+    setEditingBrandId(brand.id);
   };
 
   const deleteBrand = async (id: string) => {
@@ -450,9 +461,18 @@ export default function AdminPage() {
 
   const addCategory = async () => {
     if (!newCategoryName) return;
-    await fetch("/api/categories", { method: "POST", body: JSON.stringify({ name: newCategoryName }) });
+    await fetch("/api/categories", { 
+      method: "POST", 
+      body: JSON.stringify({ id: editingCategoryId, name: newCategoryName }) 
+    });
     setNewCategoryName("");
+    setEditingCategoryId(null);
     refreshData();
+  };
+
+  const startEditCategory = (cat: {id: string, name: string}) => {
+    setNewCategoryName(cat.name);
+    setEditingCategoryId(cat.id);
   };
 
   const deleteCategory = async (id: string) => {
@@ -859,14 +879,22 @@ export default function AdminPage() {
                   value={newBrandName} 
                   onChange={e => setNewBrandName(e.target.value)} 
                 />
-                <button className="btn-save-sm" onClick={addBrand}>Añadir Marca</button>
+                <button className="btn-save-sm" onClick={addBrand}>
+                  {editingBrandId ? "Guardar" : "Añadir"}
+                </button>
+                {editingBrandId && (
+                  <button className="btn-cancel-xs" onClick={() => { setEditingBrandId(null); setNewBrandName(""); }}>✕</button>
+                )}
               </div>
               
               <div className="list-mini">
                 {brands.map(b => (
                   <div key={b.id} className="mini-item">
-                    <span>{b.name}</span>
-                    <button className="btn-del-xs" onClick={() => deleteBrand(b.id)}>×</button>
+                    <span onClick={() => startEditBrand(b)} style={{cursor: 'pointer'}} title="Clic para editar">{b.name}</span>
+                    <div className="mini-actions">
+                      <button className="btn-edit-xs" onClick={() => startEditBrand(b)}>✏️</button>
+                      <button className="btn-del-xs" onClick={() => deleteBrand(b.id)}>×</button>
+                    </div>
                   </div>
                 ))}
               </div>
@@ -880,14 +908,22 @@ export default function AdminPage() {
                   value={newCategoryName} 
                   onChange={e => setNewCategoryName(e.target.value)} 
                 />
-                <button className="btn-save-sm" onClick={addCategory}>Añadir Categoría</button>
+                <button className="btn-save-sm" onClick={addCategory}>
+                  {editingCategoryId ? "Guardar" : "Añadir"}
+                </button>
+                {editingCategoryId && (
+                  <button className="btn-cancel-xs" onClick={() => { setEditingCategoryId(null); setNewCategoryName(""); }}>✕</button>
+                )}
               </div>
 
               <div className="list-mini">
                 {categories.map(c => (
                   <div key={c.id} className="mini-item">
-                    <span>{c.name}</span>
-                    <button className="btn-del-xs" onClick={() => deleteCategory(c.id)}>×</button>
+                    <span onClick={() => startEditCategory(c)} style={{cursor: 'pointer'}} title="Clic para editar">{c.name}</span>
+                    <div className="mini-actions">
+                      <button className="btn-edit-xs" onClick={() => startEditCategory(c)}>✏️</button>
+                      <button className="btn-del-xs" onClick={() => deleteCategory(c.id)}>×</button>
+                    </div>
                   </div>
                 ))}
               </div>
@@ -1006,8 +1042,11 @@ export default function AdminPage() {
         
         .list-mini { max-height: 300px; overflow-y: auto; display: flex; flex-wrap: wrap; gap: 8px; }
         .mini-item { background: #f0f0f0; padding: 5px 12px; border-radius: 20px; display: flex; align-items: center; gap: 8px; font-size: 13px; font-weight: 500; }
+        .mini-actions { display: flex; gap: 4px; border-left: 1px solid #ccc; padding-left: 8px; }
+        .btn-edit-xs { background: transparent; border: none; cursor: pointer; font-size: 12px; padding: 0; }
         .btn-del-xs { background: #fee2e2; color: #b91c1c; border: none; border-radius: 50%; width: 18px; height: 18px; display: flex; align-items: center; justify-content: center; cursor: pointer; font-size: 14px; font-weight: bold; }
         .btn-del-xs:hover { background: #fecaca; }
+        .btn-cancel-xs { background: #ddd; border: none; border-radius: 50%; width: 24px; height: 24px; cursor: pointer; font-weight: bold; }
 
         .easy-form { background: #fff; padding: 40px; border-radius: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.05); }
         .easy-form h2 { font-size: 14px; font-weight: bold; color: #666; margin: 15px 0 8px; text-transform: uppercase; }
