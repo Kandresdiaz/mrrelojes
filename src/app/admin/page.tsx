@@ -894,10 +894,11 @@ export default function AdminPage() {
                 <button className="btn-cancel" onClick={() => {
                   setEditingWatchId(null); 
                   setNewWatch({ 
-                    id:'', name: '', collection: '', brand: '', price: '', originalPrice: '', image: '', gallery: [], stock: '1',
+                    id:'', name: '', collection: '', brand: '', category: '', price: '', originalPrice: '', image: '', gallery: [], stock: '1',
                     description: '',
                     specs: { condition: 'Nuevo', authenticity: 'Original', warranty: '12 meses', caseSize: '', caseMaterial: '', strapMaterial: '', movement: '', waterResistance: '' }
                   });
+
                 }}>Cancelar Edición</button>
               )}
             </div>
