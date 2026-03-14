@@ -11,6 +11,7 @@ type Watch = {
   price: number;
   originalPrice: number;
   image: string;
+  gallery?: string[];
   stock: number;
   isOffer?: boolean;
   brand?: string;
@@ -51,7 +52,7 @@ export default function AdminPage() {
 
   // States for simple forms
   const [newWatch, setNewWatch] = useState({ 
-    id: '', name: '', collection: '', brand: '', price: '', originalPrice: '', image: '', stock: '1',
+    id: '', name: '', collection: '', brand: '', price: '', originalPrice: '', image: '', gallery: [] as string[], stock: '1',
     description: '',
     specs: {
       condition: 'Nuevo',
@@ -165,7 +166,7 @@ export default function AdminPage() {
                   name: namePart,
                   price: parseInt(priceMatch[0].replace(/[^0-9]/g, '')),
                   image: img,
-                  images: [img],
+                  gallery: [img],
                   collection: mapMetadata(namePart).collection,
                   brand: mapMetadata(namePart).brand,
                   stock: 1,
@@ -205,7 +206,7 @@ export default function AdminPage() {
               price: Number(String(item.price || item.precio || 0).replace(/[^0-9]/g, '')) || 0,
               originalPrice: Number(String(item.originalPrice || item.precio_antes || item.price || 0).replace(/[^0-9]/g, '')) || 0,
               image: item.image || (item.images && item.images[0]) || item.imagen || '',
-              images: item.images || [item.image || item.imagen || ''],
+              gallery: item.images || [item.image || item.imagen || ''],
               stock: Number(item.stock) || 1,
               description: item.description || item.descripcion || '',
               rating: 5, reviews: 0,
@@ -357,7 +358,7 @@ export default function AdminPage() {
     });
     
     setNewWatch({ 
-      id: '', name: '', collection: '', brand: '', price: '', originalPrice: '', image: '', stock: '1',
+      id: '', name: '', collection: '', brand: '', price: '', originalPrice: '', image: '', gallery: [], stock: '1',
       description: '',
       specs: {
         condition: 'Nuevo',
@@ -391,6 +392,7 @@ export default function AdminPage() {
       price: w.price.toString(),
       originalPrice: w.originalPrice.toString(),
       image: w.image,
+      gallery: w.gallery || [],
       stock: w.stock.toString(),
       brand: w.brand || '',
       description: w.description || '',
@@ -568,7 +570,7 @@ export default function AdminPage() {
           <button className="big-card-btn" onClick={() => { 
             setEditingWatchId(null); 
             setNewWatch({ 
-              id:'', name: '', collection: '', brand: '', price: '', originalPrice: '', image: '', stock: '1',
+              id:'', name: '', collection: '', brand: '', price: '', originalPrice: '', image: '', gallery: [], stock: '1',
               description: '',
               specs: { condition: 'Nuevo', authenticity: 'Original', warranty: '12 meses', caseSize: '', caseMaterial: '', strapMaterial: '', movement: '', waterResistance: '' }
             }); 
@@ -636,37 +638,124 @@ export default function AdminPage() {
                 ))}
               </select>
 
-              <h2>Paso 4: Foto del Reloj (Arrastre aquí o haga clic)</h2>
+              <h2>Paso 4: Fotos del Reloj (Arrastre varias o haga clic)</h2>
               <div 
-                className={`upload-zone ${newWatch.image ? 'has-file' : ''}`}
+                className={`upload-zone ${(newWatch.image || newWatch.gallery?.length) ? 'has-file' : ''}`}
                 onDragOver={(e) => e.preventDefault()}
                 onDrop={async (e) => {
                   e.preventDefault();
-                  const file = e.dataTransfer.files[0];
-                  if (file) {
-                    const url = await handleFileUpload(file, 'watches');
-                    if (url) setNewWatch({ ...newWatch, image: url });
+                  const files = Array.from(e.dataTransfer.files);
+                  if (files.length > 0) {
+                    setUploading(true);
+                    const urls: string[] = [];
+                    for(const file of files) {
+                      const url = await handleFileUpload(file, 'watches');
+                      if(url) urls.push(url);
+                    }
+                    setUploading(false);
+                    if (urls.length > 0) {
+                      setNewWatch(prev => {
+                        const newGallery = [...(prev.gallery || [])];
+                        let mainImage = prev.image;
+                        urls.forEach((u, i) => {
+                          if (!mainImage && i === 0) mainImage = u;
+                          else newGallery.push(u);
+                        });
+                        return { ...prev, image: mainImage, gallery: newGallery };
+                      });
+                    }
                   }
                 }}
               >
-                {newWatch.image ? (
-                  <div className="preview-wrap">
-                    <img src={newWatch.image} alt="Preview" className="upload-preview" />
-                    <button className="btn-change" onClick={() => setNewWatch({...newWatch, image: ''})}>Cambiar</button>
+                {(newWatch.image || (newWatch.gallery && newWatch.gallery.length > 0)) ? (
+                  <div className="preview-wrap-multi" style={{ display: 'flex', flexDirection: 'column', gap: '15px', padding: '15px' }}>
+                    <div className="preview-grid" style={{ display: 'flex', flexWrap: 'wrap', gap: '10px' }}>
+                      {newWatch.image && (
+                        <div className="preview-item" style={{ position: 'relative', width: '100px', height: '100px', borderRadius: '10px', overflow: 'hidden', border: '2px solid var(--accent-gold)' }}>
+                          <img src={newWatch.image} alt="Principal" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                          <span style={{ position: 'absolute', bottom: 0, left: 0, right: 0, background: 'rgba(0,0,0,0.7)', color: 'white', fontSize: '10px', textAlign: 'center', padding: '2px' }}>Principal</span>
+                          <button 
+                            type="button"
+                            onClick={(e) => { e.stopPropagation(); setNewWatch(prev => ({...prev, image: prev.gallery?.[0] || '', gallery: prev.gallery?.slice(1) || []})) }}
+                            style={{ position: 'absolute', top: 5, right: 5, background: 'red', color: 'white', border: 'none', borderRadius: '50%', width: '20px', height: '20px', cursor: 'pointer', fontSize: '12px' }}
+                          >X</button>
+                        </div>
+                      )}
+                      {newWatch.gallery?.map((img, idx) => (
+                         <div key={idx} className="preview-item" style={{ position: 'relative', width: '100px', height: '100px', borderRadius: '10px', overflow: 'hidden', border: '1px solid #ccc' }}>
+                           <img src={img} alt={`Galería ${idx}`} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                           <button 
+                             type="button"
+                             onClick={(e) => { e.stopPropagation(); setNewWatch(prev => ({...prev, gallery: prev.gallery.filter((_, i) => i !== idx)})) }}
+                             style={{ position: 'absolute', top: 5, right: 5, background: 'red', color: 'white', border: 'none', borderRadius: '50%', width: '20px', height: '20px', cursor: 'pointer', fontSize: '12px' }}
+                           >X</button>
+                         </div>
+                      ))}
+                      <div className="upload-more" style={{ position: 'relative', width: '100px', height: '100px', borderRadius: '10px', border: '2px dashed #999', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', background: '#f5f5f5' }}>
+                        <span style={{ fontSize: '24px', color: '#999' }}>+</span>
+                        <input 
+                          type="file" 
+                          accept="image/*" 
+                          multiple
+                          onChange={async (e) => {
+                            const files = Array.from(e.target.files || []);
+                            if (files.length > 0) {
+                              setUploading(true);
+                              const urls: string[] = [];
+                              for(const file of files) {
+                                const url = await handleFileUpload(file, 'watches');
+                                if(url) urls.push(url);
+                              }
+                              setUploading(false);
+                              if (urls.length > 0) {
+                                setNewWatch(prev => {
+                                  const newGallery = [...(prev.gallery || [])];
+                                  let mainImage = prev.image;
+                                  urls.forEach((u, i) => {
+                                    if (!mainImage && i === 0) mainImage = u;
+                                    else newGallery.push(u);
+                                  });
+                                  return { ...prev, image: mainImage, gallery: newGallery };
+                                });
+                              }
+                            }
+                          }} 
+                          style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, opacity: 0, cursor: 'pointer' }}
+                        />
+                      </div>
+                    </div>
                   </div>
                 ) : (
-                  <div className="upload-placeholder">
-                    <span>{uploading ? 'Subiendo... ⏳' : '📥 Arrastre la foto del reloj o toque para subir'}</span>
+                  <div className="upload-placeholder" style={{ position: 'relative' }}>
+                    <span>{uploading ? 'Subiendo... ⏳' : '📥 Arrastre las fotos del reloj o toque para subir (Puede seleccionar varias)'}</span>
                     <input 
                       type="file" 
                       accept="image/*" 
+                      multiple
                       onChange={async (e) => {
-                        const file = e.target.files?.[0];
-                        if (file) {
-                          const url = await handleFileUpload(file, 'watches');
-                          if (url) setNewWatch({ ...newWatch, image: url });
+                        const files = Array.from(e.target.files || []);
+                        if (files.length > 0) {
+                          setUploading(true);
+                          const urls: string[] = [];
+                          for(const file of files) {
+                            const url = await handleFileUpload(file, 'watches');
+                            if(url) urls.push(url);
+                          }
+                          setUploading(false);
+                          if (urls.length > 0) {
+                            setNewWatch(prev => {
+                              const newGallery = [...(prev.gallery || [])];
+                              let mainImage = prev.image;
+                              urls.forEach((u, i) => {
+                                if (!mainImage && i === 0) mainImage = u;
+                                else newGallery.push(u);
+                              });
+                              return { ...prev, image: mainImage, gallery: newGallery };
+                            });
+                          }
                         }
                       }} 
+                      style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, opacity: 0, cursor: 'pointer' }}
                     />
                   </div>
                 )}
@@ -707,6 +796,7 @@ export default function AdminPage() {
                     <select value={newWatch.specs.authenticity} onChange={e => setNewWatch({...newWatch, specs: {...newWatch.specs, authenticity: e.target.value}})}>
                       <option value="Original">Original ✅</option>
                       <option value="AAA">AAA (Replica) ⌚</option>
+
                     </select>
                   </div>
                 </div>
@@ -760,7 +850,7 @@ export default function AdminPage() {
                 <button className="btn-cancel" onClick={() => {
                   setEditingWatchId(null); 
                   setNewWatch({ 
-                    id:'', name: '', collection: '', brand: '', price: '', originalPrice: '', image: '', stock: '1',
+                    id:'', name: '', collection: '', brand: '', price: '', originalPrice: '', image: '', gallery: [], stock: '1',
                     description: '',
                     specs: { condition: 'Nuevo', authenticity: 'Original', warranty: '12 meses', caseSize: '', caseMaterial: '', strapMaterial: '', movement: '', waterResistance: '' }
                   });
