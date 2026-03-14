@@ -32,7 +32,8 @@ export async function GET(request: Request) {
     rating: w.rating,
     reviews: w.reviews,
     isOffer: w.is_offer,
-    brand: w.brand
+    brand: w.brand,
+    category: w.category
   }));
 
   return NextResponse.json(formattedData);
@@ -49,6 +50,7 @@ export async function POST(request: Request) {
       id: id,
       name: body.name,
       collection: body.collection,
+      category: body.category,
       price: Number(body.price),
       original_price: Number(body.originalPrice),
       image: body.image,
@@ -61,6 +63,7 @@ export async function POST(request: Request) {
       is_offer: body.isOffer || false,
       brand: body.brand
     };
+
 
     const { data, error } = await supabase.from('watches').upsert(dbPayload).select();
 

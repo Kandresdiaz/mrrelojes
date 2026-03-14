@@ -15,7 +15,9 @@ type Watch = {
   stock: number;
   isOffer?: boolean;
   brand?: string;
+  category?: string;
   description?: string;
+
   specs?: {
     condition?: string;
     authenticity?: string;
@@ -52,11 +54,12 @@ export default function AdminPage() {
 
   // States for simple forms
   const [newWatch, setNewWatch] = useState({ 
-    id: '', name: '', collection: '', brand: '', price: '', originalPrice: '', image: '', gallery: [] as string[], stock: '1',
+    id: '', name: '', collection: '', brand: '', category: '', price: '', originalPrice: '', image: '', gallery: [] as string[], stock: '1',
     description: '',
     specs: {
       condition: 'Nuevo',
       authenticity: 'Original',
+
       warranty: '12 meses',
       caseSize: '',
       caseMaterial: '',
@@ -357,9 +360,8 @@ export default function AdminPage() {
       method: "POST",
       body: JSON.stringify(watchData),
     });
-    
     setNewWatch({ 
-      id: '', name: '', collection: '', brand: '', price: '', originalPrice: '', image: '', gallery: [], stock: '1',
+      id: '', name: '', collection: '', brand: '', category: '', price: '', originalPrice: '', image: '', gallery: [], stock: '1',
       description: '',
       specs: {
         condition: 'Nuevo',
@@ -377,6 +379,8 @@ export default function AdminPage() {
     refreshData();
   };
 
+
+
   const deleteWatch = async (id: string) => {
     if(!confirm("¿Seguro que quiere quitar este reloj, mano?")) return;
     // Note: Assuming API handles DELETE or we use POST with empty stock/flag
@@ -389,7 +393,8 @@ export default function AdminPage() {
     setNewWatch({
       id: w.id,
       name: w.name,
-      collection: w.collection,
+      collection: w.collection || '',
+      category: w.category || '',
       price: w.price.toString(),
       originalPrice: w.originalPrice.toString(),
       image: w.image,
@@ -410,7 +415,9 @@ export default function AdminPage() {
     });
     setEditingWatchId(w.id);
     setActiveView("watches");
-  }
+  };
+
+
 
   const addSlide = async () => {
     if (!newSlide.headline || !newSlide.image) return alert("¡Falta el título de la promo!");
@@ -571,7 +578,7 @@ export default function AdminPage() {
           <button className="big-card-btn" onClick={() => { 
             setEditingWatchId(null); 
             setNewWatch({ 
-              id:'', name: '', collection: '', brand: '', price: '', originalPrice: '', image: '', gallery: [], stock: '1',
+              id:'', name: '', collection: '', brand: '', category: '', price: '', originalPrice: '', image: '', gallery: [], stock: '1',
               description: '',
               specs: { condition: 'Nuevo', authenticity: 'Original', warranty: '12 meses', caseSize: '', caseMaterial: '', strapMaterial: '', movement: '', waterResistance: '' }
             }); 
@@ -623,23 +630,36 @@ export default function AdminPage() {
               <h2>Paso 1: ¿Cómo se llama el reloj?</h2>
               <input placeholder="Ej: Pro Diver Gold" value={newWatch.name} onChange={e => setNewWatch({...newWatch, name: e.target.value})} />
               
-              <h2>Paso 2: ¿A qué colección pertenece?</h2>
-              <select value={newWatch.collection} onChange={e => setNewWatch({...newWatch, collection: e.target.value})}>
-                <option value="">Selecciona categoría...</option>
-                {categories.map(c => (
-                  <option key={c.id} value={c.name}>{c.name}</option>
-                ))}
-              </select>
+              <div className="row">
+                <div className="col">
+                  <h2>Paso 2: ¿Para quién es?</h2>
+                  <select value={newWatch.category} onChange={e => setNewWatch({...newWatch, category: e.target.value})}>
+                    <option value="">Selecciona...</option>
+                    <option value="Caballeros">Caballeros 🧔</option>
+                    <option value="Damas">Damas 👩</option>
+                    <option value="Unisex">Unisex 🚻</option>
+                  </select>
+                </div>
+                <div className="col">
+                  <h2>Paso 3: ¿De qué marca es?</h2>
+                  <select value={newWatch.brand} onChange={e => setNewWatch({...newWatch, brand: e.target.value})}>
+                    <option value="">Selecciona marca...</option>
+                    {brands.map(b => (
+                      <option key={b.id} value={b.name}>{b.name}</option>
+                    ))}
+                  </select>
+                </div>
+              </div>
 
-              <h2>Paso 3: ¿De qué marca es?</h2>
-              <select value={newWatch.brand} onChange={e => setNewWatch({...newWatch, brand: e.target.value})}>
-                <option value="">Selecciona marca...</option>
-                {brands.map(b => (
-                  <option key={b.id} value={b.name}>{b.name}</option>
-                ))}
-              </select>
+              <h2>Paso 4: ¿A qué colección pertenece? (Opcional)</h2>
+              <input 
+                placeholder="Ej: Pro Diver, Venom, Reserve..." 
+                value={newWatch.collection} 
+                onChange={e => setNewWatch({...newWatch, collection: e.target.value})} 
+              />
 
-              <h2>Paso 4: Fotos del Reloj (Arrastre varias o haga clic)</h2>
+              <h2>Paso 5: Fotos del Reloj (Arrastre varias o haga clic)</h2>
+
               <div 
                 className={`upload-zone ${(newWatch.image || newWatch.gallery?.length) ? 'has-file' : ''} ${isDragOver ? 'drag-over' : ''}`}
                 style={{ position: 'relative', minHeight: '150px' }}
@@ -678,7 +698,16 @@ export default function AdminPage() {
                         <h3 style={{ color: '#fff', fontSize: '18px', margin: 0 }}>¡SUELTA MÁS FOTOS AQUÍ! 📥</h3>
                       </div>
                     )}
-                    <h3 style={{ fontSize: '14px', color: '#666', borderBottom: '1px solid #ddd', paddingBottom: '5px', margin: 0 }}>Arrastra más imágenes a esta zona o usa el botón +</h3>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid #ddd', paddingBottom: '8px' }}>
+                      <h3 style={{ fontSize: '14px', color: '#666', margin: 0 }}>📸 Imágenes seleccionadas ({1 + (newWatch.gallery?.length || 0)})</h3>
+                      <button 
+                        type="button" 
+                        onClick={(e) => { e.stopPropagation(); setNewWatch(prev => ({...prev, image: '', gallery: []})) }}
+                        style={{ fontSize: '11px', background: '#fee2e2', color: '#b91c1c', border: 'none', padding: '4px 8px', borderRadius: '5px', cursor: 'pointer', fontWeight: 'bold' }}
+                      >Limpiar Todo</button>
+                    </div>
+                    <p style={{ fontSize: '12px', color: '#888', margin: 0 }}>Tip: La primera es la portada. Arrastra más o usa el +</p>
+
                     <div className="preview-grid" style={{ display: 'flex', flexWrap: 'wrap', gap: '10px' }}>
                       {newWatch.image && (
                         <div className="preview-item" style={{ position: 'relative', width: '100px', height: '100px', borderRadius: '10px', overflow: 'hidden', border: '2px solid var(--accent-gold)' }}>
@@ -1364,7 +1393,8 @@ export default function AdminPage() {
         .upload-zone {
           border: 3px dashed var(--accent-gold);
           border-radius: 15px;
-          height: 180px;
+          min-height: 180px;
+          max-height: 450px;
           display: flex;
           align-items: center;
           justify-content: center;
@@ -1373,10 +1403,12 @@ export default function AdminPage() {
           transition: 0.3s;
           position: relative;
           margin-bottom: 20px;
-          overflow: hidden;
+          overflow-y: auto;
         }
+
         .upload-zone:hover { background: #fff5e6; transform: scale(1.02); }
-        .upload-zone.has-file { border-style: solid; background: #fff; }
+        .upload-zone.has-file { border-style: solid; background: #fff; align-items: flex-start; }
+
         
         .upload-placeholder { display: flex; flex-direction: column; align-items: center; text-align: center; color: #8a6d1e; font-weight: bold; font-size: 14px; width: 100%; height: 100%; justify-content: center; }
         .upload-placeholder input { position: absolute; inset: 0; opacity: 0; cursor: pointer; }
