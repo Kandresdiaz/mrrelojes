@@ -68,6 +68,7 @@ export default function AdminPage() {
   const [newSlide, setNewSlide] = useState({ id: '', headline: '', subheadline: '', price: '', image: '' });
   
   const [uploading, setUploading] = useState(false);
+  const [isDragOver, setIsDragOver] = useState(false);
   
   const [editingWatchId, setEditingWatchId] = useState<string | null>(null);
   const [editingSlideId, setEditingSlideId] = useState<string | null>(null);
@@ -640,10 +641,13 @@ export default function AdminPage() {
 
               <h2>Paso 4: Fotos del Reloj (Arrastre varias o haga clic)</h2>
               <div 
-                className={`upload-zone ${(newWatch.image || newWatch.gallery?.length) ? 'has-file' : ''}`}
-                onDragOver={(e) => e.preventDefault()}
+                className={`upload-zone ${(newWatch.image || newWatch.gallery?.length) ? 'has-file' : ''} ${isDragOver ? 'drag-over' : ''}`}
+                style={{ position: 'relative', minHeight: '150px' }}
+                onDragOver={(e) => { e.preventDefault(); setIsDragOver(true); }}
+                onDragLeave={(e) => { e.preventDefault(); setIsDragOver(false); }}
                 onDrop={async (e) => {
                   e.preventDefault();
+                  setIsDragOver(false);
                   const files = Array.from(e.dataTransfer.files);
                   if (files.length > 0) {
                     setUploading(true);
@@ -668,7 +672,13 @@ export default function AdminPage() {
                 }}
               >
                 {(newWatch.image || (newWatch.gallery && newWatch.gallery.length > 0)) ? (
-                  <div className="preview-wrap-multi" style={{ display: 'flex', flexDirection: 'column', gap: '15px', padding: '15px' }}>
+                  <div className="preview-wrap-multi" style={{ display: 'flex', flexDirection: 'column', gap: '15px', padding: '15px', width: '100%', position: 'relative' }}>
+                    {isDragOver && (
+                      <div style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.85)', zIndex: 50, display: 'flex', alignItems: 'center', justifyContent: 'center', borderRadius: '10px', pointerEvents: 'none' }}>
+                        <h3 style={{ color: '#fff', fontSize: '18px', margin: 0 }}>¡SUELTA MÁS FOTOS AQUÍ! 📥</h3>
+                      </div>
+                    )}
+                    <h3 style={{ fontSize: '14px', color: '#666', borderBottom: '1px solid #ddd', paddingBottom: '5px', margin: 0 }}>Arrastra más imágenes a esta zona o usa el botón +</h3>
                     <div className="preview-grid" style={{ display: 'flex', flexWrap: 'wrap', gap: '10px' }}>
                       {newWatch.image && (
                         <div className="preview-item" style={{ position: 'relative', width: '100px', height: '100px', borderRadius: '10px', overflow: 'hidden', border: '2px solid var(--accent-gold)' }}>
@@ -726,8 +736,13 @@ export default function AdminPage() {
                     </div>
                   </div>
                 ) : (
-                  <div className="upload-placeholder" style={{ position: 'relative' }}>
-                    <span>{uploading ? 'Subiendo... ⏳' : '📥 Arrastre las fotos del reloj o toque para subir (Puede seleccionar varias)'}</span>
+                  <div className="upload-placeholder" style={{ position: 'relative', width: '100%', height: '100%', minHeight: '150px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                    {isDragOver && (
+                      <div style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.85)', zIndex: 50, display: 'flex', alignItems: 'center', justifyContent: 'center', borderRadius: '10px', pointerEvents: 'none' }}>
+                        <h3 style={{ color: '#fff', fontSize: '18px', margin: 0 }}>¡SUELTA LAS FOTOS AQUÍ! 📥</h3>
+                      </div>
+                    )}
+                    <span>{uploading ? 'Subiendo... ⏳' : '📥 Arrastre las fotos aquí (Puede lanzar una primero, luego otra, o todas de una)'}</span>
                     <input 
                       type="file" 
                       accept="image/*" 
