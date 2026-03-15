@@ -10,6 +10,8 @@ type Watch = {
   id: string;
   name: string;
   collection: string;
+  brand?: string;
+  category?: string;
   price: number;
   originalPrice: number;
   image: string;
@@ -17,7 +19,6 @@ type Watch = {
   rating: number;
   reviews: number;
   specs: { caseSize: string; movement: string };
-  brand?: string;
 };
 
 type Slide = {
@@ -150,7 +151,15 @@ function HomeContent() {
           <div className="loading-state">Cargando la bóveda...</div>
         ) : (
           <div className="product-grid">
-            {watches.filter(w => selectedCategory === "ALL" || w.collection === selectedCategory).map((watch) => (
+            {watches.filter(w => {
+              if (selectedCategory === "ALL") return true;
+              const target = selectedCategory.toLowerCase().replace(/-/g, " ");
+              return (
+                w.collection.toLowerCase().includes(target) ||
+                (w.category || "").toLowerCase().includes(target) ||
+                (w.brand || "").toLowerCase().includes(target)
+              );
+            }).map((watch) => (
               <article key={watch.id} className="product-card">
                 <Link href={`/products/${watch.id}`} style={{ textDecoration: 'none', color: 'inherit' }}>
                   <div className="card-image-wrapper">
@@ -179,8 +188,8 @@ function HomeContent() {
                     </div>
 
                     <div className="price-container">
-                      <span className="original-price">${watch.originalPrice.toLocaleString()} USD</span>
-                      <span className="current-price">${watch.price.toLocaleString()} USD</span>
+                      <span className="original-price">${watch.originalPrice.toLocaleString('es-CO')}</span>
+                      <span className="current-price">${watch.price.toLocaleString('es-CO')} COP</span>
                     </div>
                     
                     <button className="btn-primary buy-btn">Lo Quiero Ahora</button>

@@ -9,6 +9,8 @@ type Watch = {
   id: string;
   name: string;
   collection: string;
+  brand?: string;
+  category?: string;
   price: number;
   originalPrice: number;
   image: string;
@@ -43,9 +45,19 @@ function CollectionContent() {
         filtered = data.filter(w => (w as any).isOffer === true);
       } else if (slug !== "todos") {
         filtered = data.filter(w => {
-          const wColl = w.collection.toLowerCase().replace(/ /g, "-");
-          const target = (slug as string).toLowerCase();
-          return wColl === target || wColl.includes(target) || target.includes(wColl);
+          const target = (slug as string).toLowerCase().replace(/-/g, " ");
+          const wColl = w.collection.toLowerCase();
+          const wBrand = (w.brand || "").toLowerCase();
+          const wCat = (w.category || "").toLowerCase();
+          
+          return (
+            wColl.includes(target) || 
+            target.includes(wColl) || 
+            wBrand.includes(target) || 
+            target.includes(wBrand) ||
+            wCat.includes(target) ||
+            target.includes(wCat)
+          );
         });
       }
       
@@ -122,8 +134,8 @@ function CollectionContent() {
                       <div className="stars">{"★".repeat(5)} <span className="rev">({watch.reviews})</span></div>
                       <h3>Reloj Para {watch.collection === 'Damas' ? 'Dama' : 'Hombre'} {watch.name}</h3>
                       <div className="prices">
-                        <span className="old">${watch.originalPrice.toLocaleString()}</span>
-                        <span className="new">${watch.price.toLocaleString()} USD</span>
+                        <span className="old">${watch.originalPrice.toLocaleString('es-CO')}</span>
+                        <span className="new">${watch.price.toLocaleString('es-CO')} COP</span>
                       </div>
                     </div>
                   </Link>

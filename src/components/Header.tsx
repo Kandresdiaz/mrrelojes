@@ -184,7 +184,7 @@ export default function Header() {
                               <div className="suggestion-name">{highlightMatch(watch.name, searchTerm)}</div>
                               <div className="suggestion-collection">{watch.collection}</div>
                             </div>
-                            <span className="suggestion-price">${watch.price.toLocaleString()}</span>
+                            <span className="suggestion-price">${watch.price.toLocaleString('es-CO')} COP</span>
                           </div>
                         ))}
                         <div className="suggestions-footer" onMouseDown={() => doSearch(searchTerm)}>

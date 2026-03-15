@@ -911,7 +911,7 @@ export default function AdminPage() {
                     <img src={w.image} alt="prev" />
                     <div className="p-info">
                       <h4>{w.name}</h4>
-                      <p>${w.price.toLocaleString()} - {w.stock} uds</p>
+                      <p>${w.price.toLocaleString('es-CO')} COP - {w.stock} uds</p>
                       <div className="btn-group">
                         <button className="btn-edit" onClick={() => startEditWatch(w)}>Editar ✏️</button>
                         <button className="btn-del" onClick={() => deleteWatch(w.id)}>Borrar 🗑️</button>
@@ -1097,7 +1097,7 @@ export default function AdminPage() {
                           <strong>{w.name}</strong><br/>
                           <small className="badge-col">{w.collection}</small>
                         </td>
-                        <td>${w.price.toLocaleString()}</td>
+                        <td>${w.price.toLocaleString('es-CO')} COP</td>
                         <td>
                           <div className="img-preview-cell">
                             {w.image ? <img src={w.image} alt="prev" className="csv-thumb" /> : <span className="no-img">Sin foto</span>}

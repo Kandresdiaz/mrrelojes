@@ -8,7 +8,7 @@ export async function GET(request: Request) {
   let query = supabase.from('watches').select('*');
 
   if (search) {
-    query = query.or(`name.ilike.%${search}%,collection.ilike.%${search}%,description.ilike.%${search}%`);
+    query = query.or(`name.ilike.%${search}%,collection.ilike.%${search}%,description.ilike.%${search}%,brand.ilike.%${search}%,category.ilike.%${search}%`);
   }
 
   const { data, error } = await query.order('created_at', { ascending: false });

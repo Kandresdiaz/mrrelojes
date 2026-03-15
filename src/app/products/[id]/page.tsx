@@ -58,7 +58,7 @@ function ProductDetailContent() {
   if (loading) return <div className="loading-container">Cargando pieza exclusiva...</div>;
   if (!watch) return <div className="loading-container">Reloj no encontrado</div>;
 
-  const whatsappMessage = `Hola MrRelojesBga, me interesa el reloj: ${watch.name} ($${watch.price} USD). ¿Sigue disponible?`;
+  const whatsappMessage = `Hola MrRelojesBga, me interesa el reloj: ${watch.name} ($${watch.price.toLocaleString('es-CO')} COP). ¿Sigue disponible?`;
   const whatsappUrl = `https://wa.me/573043695986?text=${encodeURIComponent(whatsappMessage)}`;
 
   return (
@@ -97,7 +97,7 @@ function ProductDetailContent() {
           </a>
 
           <div className="price-box">
-            <span className="current-price">${watch.price.toLocaleString()} USD</span>
+            <span className="current-price">${watch.price.toLocaleString('es-CO')} COP</span>
             {watch.stock <= 0 ? (
               <span className="stock-badge out">Ya se lo llevaron</span>
             ) : (
@@ -145,8 +145,8 @@ function ProductDetailContent() {
                   <h4 className="related-name">{w.name}</h4>
                   <div className="stars">{"★".repeat(5)} <span className="rev-count">({w.reviews || 0})</span></div>
                   <div className="price-stack">
-                    {w.originalPrice > w.price && <span className="old-price">${w.originalPrice.toLocaleString()}</span>}
-                    <span className="current-p">${w.price.toLocaleString()}</span>
+                    {w.originalPrice > w.price && <span className="old-price">${w.originalPrice.toLocaleString('es-CO')}</span>}
+                    <span className="current-p">${w.price.toLocaleString('es-CO')} COP</span>
                   </div>
                 </div>
               </Link>
