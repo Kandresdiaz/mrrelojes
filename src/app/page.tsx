@@ -204,7 +204,14 @@ function HomeContent() {
                         <div className="urgency-tag">¡Solo quedan {watch.stock}!</div>
                       )}
                       {watch.stock <= 0 && <div className="urgency-tag" style={{background: 'gray'}}>Agotado</div>}
-                      <img src={watch.image} alt={watch.name} loading="lazy" />
+                      <img 
+                        src={watch.image} 
+                        alt={watch.name} 
+                        loading="lazy" 
+                        onError={(e) => {
+                          e.currentTarget.src = "https://placehold.co/600x600/eeeeee/999999?text=Sin+Imagen";
+                        }}
+                      />
                     </div>
 
                     <div className="card-content">

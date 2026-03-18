@@ -79,7 +79,14 @@ function ProductDetailContent() {
         {/* IMÁGENES */}
         <div className="gallery-column">
           <div className="main-image-box">
-            <img src={activeImage} alt={watch.name} className="main-img" />
+            <img 
+              src={activeImage} 
+              alt={watch.name} 
+              className="main-img" 
+              onError={(e) => {
+                e.currentTarget.src = "https://placehold.co/600x600/eeeeee/999999?text=Sin+Imagen";
+              }}
+            />
           </div>
           <div className="thumbnails-grid">
             {[watch.image, ...(watch.gallery || [])].map((img, idx) => (
@@ -88,7 +95,13 @@ function ProductDetailContent() {
                 className={`thumb-item ${img === activeImage ? "active" : ""}`}
                 onClick={() => setActiveImage(img)}
               >
-                <img src={img} alt={`Vista ${idx + 1}`} />
+                <img 
+                  src={img} 
+                  alt={`Vista ${idx + 1}`} 
+                  onError={(e) => {
+                    e.currentTarget.src = "https://placehold.co/600x600/eeeeee/999999?text=Sin+Imagen";
+                  }}
+                />
               </div>
             ))}
           </div>
@@ -149,7 +162,13 @@ function ProductDetailContent() {
               <Link href={`/products/${w.id}`} key={w.id} className="related-card">
                 <div className="related-img-box">
                   {discount > 0 && <span className="discount-badge">-{discount}%</span>}
-                  <img src={w.image} alt={w.name} />
+                  <img 
+                    src={w.image} 
+                    alt={w.name} 
+                    onError={(e) => {
+                      e.currentTarget.src = "https://placehold.co/600x600/eeeeee/999999?text=Sin+Imagen";
+                    }}
+                  />
                 </div>
                 <div className="related-info">
                   <h4 className="related-name">{w.name}</h4>

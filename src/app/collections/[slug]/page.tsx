@@ -147,7 +147,14 @@ function CollectionContent() {
                     <Link href={`/products/${watch.id}`} className="card-link">
                       <div className="image-box">
                         <div className="discount-tag">-{Math.round((1 - watch.price / watch.originalPrice) * 100)}%</div>
-                        <img src={watch.image} alt={watch.name} loading="lazy" />
+                        <img 
+                          src={watch.image} 
+                          alt={watch.name} 
+                          loading="lazy" 
+                          onError={(e) => {
+                            e.currentTarget.src = "https://placehold.co/600x600/eeeeee/999999?text=Sin+Imagen";
+                          }}
+                        />
                       </div>
                       <div className="info-box">
                         <div className="stars">{"★".repeat(5)} <span className="rev">({watch.reviews})</span></div>
