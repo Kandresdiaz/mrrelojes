@@ -1,10 +1,12 @@
 "use client";
 
-import { useEffect, useState, useCallback, Suspense } from "react";
+import { useEffect, useState, useCallback, Suspense, useRef } from "react";
 import Link from "next/link";
 import { useSearchParams, useRouter } from "next/navigation";
 import Header from "@/components/Header";
 import "./home.css";
+
+const PAGE_SIZE = 20;
 
 type Watch = {
   id: string;
@@ -37,19 +39,32 @@ function HomeContent() {
   const [watches, setWatches] = useState<Watch[]>([]);
   const [slides, setSlides] = useState<Slide[]>([]);
   const [loading, setLoading] = useState(true);
-  const [timeLeft, setTimeLeft] = useState({ hours: 4, minutes: 59, seconds: 59 });
+  const [loadingMore, setLoadingMore] = useState(false);
+  const [total, setTotal] = useState(0);
+  const [offset, setOffset] = useState(0);
   const [currentSlide, setCurrentSlide] = useState(0);
+  const loadMoreRef = useRef<HTMLDivElement>(null);
 
   const searchParams = useSearchParams();
   const selectedCategory = searchParams.get("category") || "ALL";
+  const search = searchParams.get("search") || "";
 
+  // Initial load: reset and fetch first page
   useEffect(() => {
-    const search = searchParams.get("search") || "";
+    setWatches([]);
+    setOffset(0);
+    setTotal(0);
+    setLoading(true);
+
     Promise.all([
-      fetch(`/api/watches?search=${search}`).then(res => res.json()),
+      fetch(`/api/watches?search=${search}&limit=${PAGE_SIZE}&offset=0`).then(res => res.json()),
       fetch("/api/slider").then(res => res.json())
     ]).then(([wData, sData]) => {
-      setWatches(Array.isArray(wData) ? wData : []);
+      if (wData && wData.items) {
+        setWatches(wData.items);
+        setTotal(wData.total);
+        setOffset(PAGE_SIZE);
+      }
       setSlides(Array.isArray(sData) ? sData : []);
       setLoading(false);
     }).catch(() => {
@@ -57,7 +72,23 @@ function HomeContent() {
       setSlides([]);
       setLoading(false);
     });
-  }, [searchParams]);
+  }, [search]);
+
+  const loadMore = useCallback(async () => {
+    if (loadingMore || watches.length >= total) return;
+    setLoadingMore(true);
+    try {
+      const res = await fetch(`/api/watches?search=${search}&limit=${PAGE_SIZE}&offset=${offset}`);
+      const data = await res.json();
+      if (data && data.items) {
+        setWatches(prev => [...prev, ...data.items]);
+        setOffset(prev => prev + PAGE_SIZE);
+        setTotal(data.total);
+      }
+    } finally {
+      setLoadingMore(false);
+    }
+  }, [loadingMore, watches.length, total, search, offset]);
 
   const nextSlide = useCallback(() => {
     setCurrentSlide((prev) => (prev + 1) % slides.length);
@@ -73,11 +104,24 @@ function HomeContent() {
     return () => clearInterval(timer);
   }, [nextSlide, slides.length]);
 
+  // Filter watches by category (client-side filtering on loaded items)
+  const filteredWatches = watches.filter(w => {
+    if (selectedCategory === "ALL") return true;
+    const target = selectedCategory.toLowerCase().replace(/-/g, " ");
+    return (
+      w.collection?.toLowerCase().includes(target) ||
+      (w.category || "").toLowerCase().includes(target) ||
+      (w.brand || "").toLowerCase().includes(target)
+    );
+  });
+
+  const hasMore = watches.length < total;
+
   return (
     <div className="home-wrapper">
       <Header />
 
-      {/* 4. HERO SLIDER SECTION */}
+      {/* HERO SLIDER SECTION */}
       <section className="hero-slider">
         {slides.length > 0 && (
           <div className="slides-container" style={{ transform: `translateX(-${currentSlide * 100}%)` }}>
@@ -117,7 +161,7 @@ function HomeContent() {
         )}
       </section>
 
-      {/* 5. PROMO BANNERS */}
+      {/* PROMO BANNERS */}
       <section className="promo-banners container">
         <div className="banner banner-left">
           <div className="banner-text">
@@ -136,72 +180,89 @@ function HomeContent() {
         </div>
       </section>
 
-      {/* 6. BLACK STRIP */}
+      {/* BLACK STRIP */}
       <div className="black-strip">
         <div className="container">
           <h2>¡LOS MEJORES PRECIOS DE BUCARAMANGA ESTÁN AQUÍ!</h2>
         </div>
       </div>
 
-      {/* 7. PRODUCT GRID */}
+      {/* PRODUCT GRID */}
       <section className="products-section container">
         <h2 className="section-title">Pura <span className="gold-text">Maquinaria</span> Santandereana</h2>
-        
+
         {loading ? (
           <div className="loading-state">Cargando la bóveda...</div>
         ) : (
-          <div className="product-grid">
-            {watches.filter(w => {
-              if (selectedCategory === "ALL") return true;
-              const target = selectedCategory.toLowerCase().replace(/-/g, " ");
-              return (
-                w.collection.toLowerCase().includes(target) ||
-                (w.category || "").toLowerCase().includes(target) ||
-                (w.brand || "").toLowerCase().includes(target)
-              );
-            }).map((watch) => (
-              <article key={watch.id} className="product-card">
-                <Link href={`/products/${watch.id}`} style={{ textDecoration: 'none', color: 'inherit' }}>
-                  <div className="card-image-wrapper">
-                    {watch.stock <= 3 && watch.stock > 0 && (
-                      <div className="urgency-tag">¡Solo quedan {watch.stock}!</div>
-                    )}
-                    {watch.stock <= 0 && <div className="urgency-tag" style={{background: 'gray'}}>Agotado</div>}
-                    <img src={watch.image} alt={watch.name} loading="lazy" />
-                  </div>
-                  
-                  <div className="card-content">
-                    <div className="review-stars">
-                      {"★".repeat(Math.floor(watch.rating))}
-                      {"☆".repeat(5 - Math.floor(watch.rating))} 
-                      <span className="review-count">({watch.reviews})</span>
-                    </div>
-                    
-                    <div className="card-top-info">
-                      <span className="collection-name">{watch.collection}</span>
-                      {watch.brand && <span className="brand-name">{watch.brand}</span>}
-                    </div>
-                    <h3 className="watch-name">{watch.name}</h3>
-                    
-                    <div className="specs-mini">
-                      <span>{watch.specs.caseSize}</span> • <span>{watch.specs.movement}</span>
+          <>
+            <div className="product-grid">
+              {filteredWatches.map((watch) => (
+                <article key={watch.id} className="product-card">
+                  <Link href={`/products/${watch.id}`} style={{ textDecoration: 'none', color: 'inherit' }}>
+                    <div className="card-image-wrapper">
+                      {watch.stock <= 3 && watch.stock > 0 && (
+                        <div className="urgency-tag">¡Solo quedan {watch.stock}!</div>
+                      )}
+                      {watch.stock <= 0 && <div className="urgency-tag" style={{background: 'gray'}}>Agotado</div>}
+                      <img src={watch.image} alt={watch.name} loading="lazy" />
                     </div>
 
-                    <div className="price-container">
-                      <span className="original-price">${watch.originalPrice.toLocaleString('es-CO')}</span>
-                      <span className="current-price">${watch.price.toLocaleString('es-CO')} COP</span>
+                    <div className="card-content">
+                      <div className="review-stars">
+                        {"★".repeat(Math.floor(watch.rating))}
+                        {"☆".repeat(5 - Math.floor(watch.rating))}
+                        <span className="review-count">({watch.reviews})</span>
+                      </div>
+
+                      <div className="card-top-info">
+                        <span className="collection-name">{watch.collection}</span>
+                        {watch.brand && <span className="brand-name">{watch.brand}</span>}
+                      </div>
+                      <h3 className="watch-name">{watch.name}</h3>
+
+                      <div className="specs-mini">
+                        <span>{watch.specs?.caseSize}</span> • <span>{watch.specs?.movement}</span>
+                      </div>
+
+                      <div className="price-container">
+                        <span className="original-price">${watch.originalPrice.toLocaleString('es-CO')}</span>
+                        <span className="current-price">${watch.price.toLocaleString('es-CO')} COP</span>
+                      </div>
+
+                      <button className="btn-primary buy-btn">Lo Quiero Ahora</button>
                     </div>
-                    
-                    <button className="btn-primary buy-btn">Lo Quiero Ahora</button>
-                  </div>
-                </Link>
-              </article>
-            ))}
-          </div>
+                  </Link>
+                </article>
+              ))}
+            </div>
+
+            {/* VER MÁS / CONTADOR */}
+            <div className="load-more-section" ref={loadMoreRef}>
+              <p className="products-counter">
+                Mostrando <strong>{filteredWatches.length}</strong> de <strong>{total}</strong> relojes
+              </p>
+              {hasMore && (
+                <button
+                  className="btn-load-more"
+                  onClick={loadMore}
+                  disabled={loadingMore}
+                >
+                  {loadingMore ? (
+                    <span className="loading-spinner">⏳ Cargando más relojes...</span>
+                  ) : (
+                    <>Ver más relojes ↓</>
+                  )}
+                </button>
+              )}
+              {!hasMore && watches.length > 0 && (
+                <p className="end-message">✅ ¡Has visto todo el catálogo!</p>
+              )}
+            </div>
+          </>
         )}
       </section>
 
-      {/* 8. TESTIMONIALS */}
+      {/* TESTIMONIALS */}
       <section className="testimonials">
         <div className="container">
           <h2 className="test-title">LO QUE DICEN NUESTROS VECINOS EN SANTANDER</h2>
@@ -209,7 +270,7 @@ function HomeContent() {
             <span className="stars">★★★★★</span>
             <p>Más de 4.800 bumangueses felices</p>
           </div>
-          
+
           <div className="testimonials-grid">
             <div className="test-card">
               <span className="stars">★★★★★</span>
@@ -233,16 +294,14 @@ function HomeContent() {
         </div>
       </section>
 
-      {/* 9. RISK REVERSAL FOOTER */}
+      {/* RISK REVERSAL FOOTER */}
       <section className="risk-reversal-footer">
         <div className="container">
           <h2>Palabra de Santandereano: Si no le gusta, me lo devuelve</h2>
-          <p>En <strong>MrRelojesBga</strong> no jugamos con su tiempo. Le damos <strong>30 días de garantía total</strong>. 
+          <p>En <strong>MrRelojesBga</strong> no jugamos con su tiempo. Le damos <strong>30 días de garantía total</strong>.
           Si el reloj no lo hace sentir como el más elegante de la sala, me lo devuelve y le devuelvo cada peso. ¡Sin preguntas, mano!</p>
         </div>
       </section>
-
-
     </div>
   );
 }

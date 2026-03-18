@@ -4,21 +4,24 @@ import { supabase } from '@/lib/supabase';
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
   const search = searchParams.get('search');
-  
-  let query = supabase.from('watches').select('*');
+  const limit = parseInt(searchParams.get('limit') || '20', 10);
+  const offset = parseInt(searchParams.get('offset') || '0', 10);
+
+  let query = supabase.from('watches').select('*', { count: 'exact' });
 
   if (search) {
     query = query.or(`name.ilike.%${search}%,collection.ilike.%${search}%,description.ilike.%${search}%,brand.ilike.%${search}%,category.ilike.%${search}%`);
   }
 
-  const { data, error } = await query.order('created_at', { ascending: false });
+  const { data, error, count } = await query
+    .order('created_at', { ascending: false })
+    .range(offset, offset + limit - 1);
 
   if (error) {
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 
-  // Map database fields to frontend fields
-  const formattedData = data.map(w => ({
+  const formattedData = (data || []).map(w => ({
     id: w.id,
     name: w.name,
     collection: w.collection,
@@ -36,14 +39,13 @@ export async function GET(request: Request) {
     category: w.category
   }));
 
-  return NextResponse.json(formattedData);
+  return NextResponse.json({ items: formattedData, total: count ?? 0 });
 }
 
 export async function POST(request: Request) {
   try {
     const body = await request.json();
-    
-    // Auto-generate ID if not provided
+
     const id = body.id || 'watch-' + Date.now().toString();
 
     const dbPayload = {
@@ -63,7 +65,6 @@ export async function POST(request: Request) {
       is_offer: body.isOffer || false,
       brand: body.brand
     };
-
 
     const { data, error } = await supabase.from('watches').upsert(dbPayload).select();
 

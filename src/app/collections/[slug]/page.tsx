@@ -1,6 +1,8 @@
 "use client";
 
-import { useEffect, useState, Suspense } from "react";
+import { useEffect, useState, useCallback, Suspense } from "react";
+
+const PAGE_SIZE = 20;
 import { useParams, useSearchParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import Header from "@/components/Header";
@@ -25,47 +27,65 @@ function CollectionContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
   const [watches, setWatches] = useState<Watch[]>([]);
-  const [filteredWatches, setFilteredWatches] = useState<Watch[]>([]);
   const [loading, setLoading] = useState(true);
+  const [loadingMore, setLoadingMore] = useState(false);
+  const [total, setTotal] = useState(0);
+  const [offset, setOffset] = useState(0);
 
-  // Map slug to human readable name
   const collectionName = (slug as string).split("-").map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(" ");
+  const search = searchParams.get("search") || "";
 
   useEffect(() => {
-    async function fetchData() {
-      const search = searchParams.get("search") || "";
-      const isOfferPage = slug === "ofertas";
-      
-      const res = await fetch(`/api/watches?search=${search}`);
-      const data: Watch[] = await res.json();
-      setWatches(data);
-      
-      let filtered = data;
-      if (isOfferPage) {
-        filtered = data.filter(w => (w as any).isOffer === true);
-      } else if (slug !== "todos") {
-        filtered = data.filter(w => {
-          const target = (slug as string).toLowerCase().replace(/-/g, " ");
-          const wColl = w.collection.toLowerCase();
-          const wBrand = (w.brand || "").toLowerCase();
-          const wCat = (w.category || "").toLowerCase();
-          
-          return (
-            wColl.includes(target) || 
-            target.includes(wColl) || 
-            wBrand.includes(target) || 
-            target.includes(wBrand) ||
-            wCat.includes(target) ||
-            target.includes(wCat)
-          );
-        });
+    setWatches([]);
+    setOffset(0);
+    setTotal(0);
+    setLoading(true);
+
+    fetch(`/api/watches?search=${search}&limit=${PAGE_SIZE}&offset=0`)
+      .then(r => r.json())
+      .then(data => {
+        if (data && data.items) {
+          setWatches(data.items);
+          setTotal(data.total);
+          setOffset(PAGE_SIZE);
+        }
+        setLoading(false);
+      })
+      .catch(() => setLoading(false));
+  }, [slug, search]);
+
+  const loadMore = useCallback(async () => {
+    if (loadingMore || watches.length >= total) return;
+    setLoadingMore(true);
+    try {
+      const res = await fetch(`/api/watches?search=${search}&limit=${PAGE_SIZE}&offset=${offset}`);
+      const data = await res.json();
+      if (data && data.items) {
+        setWatches(prev => [...prev, ...data.items]);
+        setOffset(prev => prev + PAGE_SIZE);
+        setTotal(data.total);
       }
-      
-      setFilteredWatches(filtered);
-      setLoading(false);
+    } finally {
+      setLoadingMore(false);
     }
-    fetchData();
-  }, [slug, searchParams]);
+  }, [loadingMore, watches.length, total, search, offset]);
+
+  // Filter client-side by slug
+  const filteredWatches = watches.filter(w => {
+    if (slug === "todos") return true;
+    if (slug === "ofertas") return (w as any).isOffer === true;
+    const target = (slug as string).toLowerCase().replace(/-/g, " ");
+    return (
+      w.collection?.toLowerCase().includes(target) ||
+      target.includes(w.collection?.toLowerCase() || "") ||
+      (w.brand || "").toLowerCase().includes(target) ||
+      target.includes((w.brand || "").toLowerCase()) ||
+      (w.category || "").toLowerCase().includes(target) ||
+      target.includes((w.category || "").toLowerCase())
+    );
+  });
+
+  const hasMore = watches.length < total;
 
   return (
     <div className="collection-page">
@@ -110,10 +130,8 @@ function CollectionContent() {
 
         <main className="product-listing">
           <div className="listing-controls">
-            <span className="count">{filteredWatches.length} Productos</span>
+            <span className="count">{filteredWatches.length} de {total} Productos</span>
             <div className="sort-group">
-              <label>Mostrar</label>
-              <select><option>20</option></select>
               <label>Ordenar por</label>
               <select><option>Destacados</option></select>
             </div>
@@ -122,26 +140,49 @@ function CollectionContent() {
           {loading ? (
             <div className="loading">Consultando inventario...</div>
           ) : (
-            <div className="product-grid">
-              {filteredWatches.map((watch) => (
-                <article key={watch.id} className="product-card">
-                  <Link href={`/products/${watch.id}`} className="card-link">
-                    <div className="image-box">
-                      <div className="discount-tag">-{Math.round((1 - watch.price / watch.originalPrice) * 100)}%</div>
-                      <img src={watch.image} alt={watch.name} />
-                    </div>
-                    <div className="info-box">
-                      <div className="stars">{"★".repeat(5)} <span className="rev">({watch.reviews})</span></div>
-                      <h3>Reloj Para {watch.collection === 'Damas' ? 'Dama' : 'Hombre'} {watch.name}</h3>
-                      <div className="prices">
-                        <span className="old">${watch.originalPrice.toLocaleString('es-CO')}</span>
-                        <span className="new">${watch.price.toLocaleString('es-CO')} COP</span>
+            <>
+              <div className="product-grid">
+                {filteredWatches.map((watch) => (
+                  <article key={watch.id} className="product-card">
+                    <Link href={`/products/${watch.id}`} className="card-link">
+                      <div className="image-box">
+                        <div className="discount-tag">-{Math.round((1 - watch.price / watch.originalPrice) * 100)}%</div>
+                        <img src={watch.image} alt={watch.name} loading="lazy" />
                       </div>
-                    </div>
-                  </Link>
-                </article>
-              ))}
-            </div>
+                      <div className="info-box">
+                        <div className="stars">{"★".repeat(5)} <span className="rev">({watch.reviews})</span></div>
+                        <h3>{watch.name}</h3>
+                        <div className="prices">
+                          <span className="old">${watch.originalPrice.toLocaleString('es-CO')}</span>
+                          <span className="new">${watch.price.toLocaleString('es-CO')} COP</span>
+                        </div>
+                      </div>
+                    </Link>
+                  </article>
+                ))}
+              </div>
+
+              {hasMore && (
+                <div style={{textAlign:'center', margin:'40px 0'}}>
+                  <button
+                    onClick={loadMore}
+                    disabled={loadingMore}
+                    style={{
+                      background: '#000', color: '#fff', border: '2px solid #000',
+                      padding: '14px 50px', fontSize: '14px', fontWeight: 800,
+                      textTransform: 'uppercase', letterSpacing: '1px',
+                      cursor: loadingMore ? 'not-allowed' : 'pointer',
+                      borderRadius: '4px', opacity: loadingMore ? 0.6 : 1
+                    }}
+                  >
+                    {loadingMore ? '⏳ Cargando...' : 'Ver más relojes ↓'}
+                  </button>
+                </div>
+              )}
+              {!hasMore && watches.length > 0 && (
+                <p style={{textAlign:'center',color:'#888',margin:'30px 0',fontSize:'13px'}}>✅ ¡Has visto todo el catálogo!</p>
+              )}
+            </>
           )}
         </main>
       </div>
