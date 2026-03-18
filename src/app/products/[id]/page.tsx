@@ -40,17 +40,27 @@ function ProductDetailContent() {
 
   useEffect(() => {
     async function fetchData() {
-      const res = await fetch("/api/watches");
-      const data: Watch[] = await res.json();
-      const product = Array.isArray(data) ? data.find((w) => w.id === id) : null;
-
-      if (product) {
-        setWatch(product);
-        setActiveImage(product.image);
-        const shuffled = data.filter(w => w.id !== id).sort(() => 0.5 - Math.random());
-        setRelatedWatches(shuffled.slice(0, 8));
+      try {
+        const res = await fetch(`/api/watches/${id}`);
+        if (!res.ok) {
+          setWatch(null);
+          setLoading(false);
+          return;
+        }
+        const data = await res.json();
+        
+        if (data && data.watch) {
+          setWatch(data.watch);
+          setActiveImage(data.watch.image);
+          setRelatedWatches(data.related || []);
+        } else {
+          setWatch(null);
+        }
+      } catch (err) {
+        setWatch(null);
+      } finally {
+        setLoading(false);
       }
-      setLoading(false);
     }
     fetchData();
   }, [id]);
